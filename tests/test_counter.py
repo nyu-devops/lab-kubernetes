@@ -30,7 +30,7 @@ from unittest.mock import patch
 from redis.exceptions import ConnectionError
 from service.models import Counter, DatabaseConnectionError
 
-# logging.basicConfig(level=logging.CRITICAL)
+logging.disable(logging.CRITICAL)
 
 DATABASE_URI = os.getenv("DATABASE_URI", "redis://:@localhost:6379/0")
 

@@ -109,13 +109,13 @@ class ServiceTest(TestCase):
         resp = self.app.post("/counter")
         self.assertEqual(resp.status_code, 503)
 
-    @patch("service.models.Counter.value")
-    def test_failed_delete_request(self, value_mock):
-        """ Error handlers for failed DELETE """
-        value_mock.return_value = 0
-        value_mock.side_effect = Exception()
-        resp = self.app.delete("/counter")
-        self.assertEqual(resp.status_code, 503)
+    # @patch("service.models.Counter.value")
+    # def test_failed_delete_request(self, value_mock):
+    #     """ Error handlers for failed DELETE """
+    #     value_mock.return_value = 0
+    #     value_mock.side_effect = Exception()
+    #     resp = self.app.delete("/counter")
+    #     self.assertEqual(resp.status_code, 503)
 
     # @patch('flask.request.get_json')
     # def test_failed_post_request(self, value_mock):
