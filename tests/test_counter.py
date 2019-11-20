@@ -158,6 +158,7 @@ class CounterTests(TestCase):
         self.assertEqual(credentials["port"], 6379)
         self.assertEqual(credentials["database"], "0")
 
+    @patch.dict(os.environ, {"DATABASE_URI": ""})
     def test_missing_environment_creds(self):
         """ Missing environment credentials """
         self.assertRaises(DatabaseConnectionError, self.counter.connect)
