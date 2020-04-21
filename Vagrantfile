@@ -82,25 +82,10 @@ Vagrant.configure(2) do |config|
     sudo -H -u vagrant sh -c 'python3 -m venv ~/venv'
     sudo -H -u vagrant sh -c 'echo ". ~/venv/bin/activate" >> ~/.profile'
     sudo -H -u vagrant sh -c '. ~/venv/bin/activate && cd /vagrant && pip install -r requirements.txt'
-
-    # Install minikube version of Kubernetes
-    curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-    chmod +x minikube
-    sudo mv minikube /usr/local/bin
-
-    # # install kubectl for Kubernetes CLI
-    # curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
-    # chmod +x ./kubectl
-    # sudo mv ./kubectl /usr/local/bin/kubectl
-    #
-    # Check versions to prove that everything is installed
-    python3 --version
-    minikube version
-    # kubectl version
   SHELL
 
   ############################################################
-  # Provision Docker with Vagrant before starting minikube
+  # Provision Docker with Vagrant before starting kubernetes
   ############################################################
   config.vm.provision "docker" do |d|
     d.pull_images "alpine"
@@ -118,6 +103,19 @@ Vagrant.configure(2) do |config|
   #   yml: "/vagrant/docker-compose.yml",
   #   rebuild: true,
   #   run: "always"
+
+  ############################################################
+  # Create a Kubernetes Cluster
+  ############################################################
+  config.vm.provision "shell", inline: <<-SHELL
+    # install MicroK8s version of Kubernetes
+    sudo snap install microk8s --classic
+    sudo microk8s.enable dns dashboard registry
+    sudo usermod -a -G microk8s vagrant
+    sudo -H -u vagrant sh -c 'echo "alias kubectl=/snap/bin/microk8s.kubectl" >> ~/.bashrc'
+    /snap/bin/microk8s.kubectl version --short
+  SHELL
+
 
   ######################################################################
   # Setup an IBM Cloud and Kubernetes environment
