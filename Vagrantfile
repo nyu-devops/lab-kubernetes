@@ -35,8 +35,8 @@ Vagrant.configure(2) do |config|
   ############################################################
   config.vm.provider "virtualbox" do |vb|
     # Customize the amount of memory on the VM:
-    vb.memory = "2048"
-    vb.cpus = 1
+    vb.memory = "4096"
+    vb.cpus = 2
     # Fixes some DNS issues on some networks
     vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
     vb.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
@@ -110,7 +110,7 @@ Vagrant.configure(2) do |config|
   config.vm.provision "shell", inline: <<-SHELL
     # install MicroK8s version of Kubernetes
     sudo snap install microk8s --classic
-    sudo microk8s.enable dns dashboard registry
+    sudo microk8s.enable dns dashboard ingress registry
     sudo usermod -a -G microk8s vagrant
     sudo -H -u vagrant sh -c 'echo "alias kubectl=/snap/bin/microk8s.kubectl" >> ~/.bashrc'
     /snap/bin/microk8s.kubectl version --short
@@ -137,11 +137,5 @@ Vagrant.configure(2) do |config|
     # Prove that plug-ins are installed as vagrant user
     sudo -H -u vagrant bash -c "bx plugin list"
   SHELL
-
-  ############################################################
-  # Start minikube as vagrant user but with sudo privileges
-  ############################################################
-  # sudo minikube start --vm-driver=none --memory 4096
-  # sudo minikube addons enable ingress
 
 end

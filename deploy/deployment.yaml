@@ -17,7 +17,7 @@ spec:
       restartPolicy: Always
       containers:
       - name: hitcounter
-        image: hitcounter:1.0
+        image: localhost:32000/hitcounter:1.0
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
@@ -28,3 +28,10 @@ spec:
               secretKeyRef:
                 name: redis-creds
                 key: uri
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: "64Mi"
+          requests:
+            cpu: "0.25"        
+            memory: "32Mi"
