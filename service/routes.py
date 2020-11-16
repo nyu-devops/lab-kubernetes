@@ -16,34 +16,45 @@ Redis Counter Demo in Docker
 """
 import os
 from flask import jsonify, json, abort, request
+from flask_api import status  # HTTP Status Codes
 from . import app
+from service import DATABASE_URI
 from .models import Counter, DatabaseConnectionError
 
 DEBUG = os.getenv("DEBUG", "False") == "True"
 PORT = os.getenv("PORT", "5000")
-DATABASE_URI = os.getenv("DATABASE_URI", "redis://:@localhost:6379/0")
 
 counter = None
 
 ######################################################################
 #   E R R O R   H A N D L E R S
 ######################################################################
-@app.errorhandler(503)
+@app.errorhandler(status.HTTP_503_SERVICE_UNAVAILABLE)
 def internal_server_error(error):
     """ Handles unexpected server error with 503_SERVICE_UNAVAILABLE """
     message = str(error)
     app.logger.error(message)
     return (
-        jsonify(status=503, error="Service is unavailable", message=message),
-        503,
+        jsonify(
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            error="Service is unavailable",
+            message=message,
+        ),
+        status.HTTP_503_SERVICE_UNAVAILABLE,
     )
 
-@app.errorhandler(400)
+
+@app.errorhandler(status.HTTP_400_BAD_REQUEST)
 def internal_server_error(error):
     """ Handles bad requiest data """
     message = str(error)
     app.logger.error(message)
-    return jsonify(status=400, error="Bad Request", message=message), 400
+    return (
+        jsonify(
+            status=status.HTTP_400_BAD_REQUEST, error="Bad Request", message=message
+        ),
+        status.HTTP_400_BAD_REQUEST,
+    )
 
 
 ######################################################################
@@ -65,8 +76,8 @@ def get_counter():
     try:
         count = counter.value
     except Exception as err:
-        abort(503, err)
-    return jsonify(counter=count), 200
+        abort(status.HTTP_503_SERVICE_UNAVAILABLE, err)
+    return jsonify(counter=count), status.HTTP_200_OK
 
 
 # POST /counter
@@ -77,8 +88,8 @@ def increment_counter():
     try:
         count = counter.increment()
     except Exception as err:
-        abort(503, err)
-    return jsonify(counter=count), 201
+        abort(status.HTTP_503_SERVICE_UNAVAILABLE, err)
+    return jsonify(counter=count), status.HTTP_201_CREATED
 
 
 @app.route("/counter", methods=["PUT"])
@@ -88,13 +99,13 @@ def set_counter():
     try:
         data = request.get_json()
         if not data:
-            abort(400, "Bad request data")
+            abort(status.HTTP_400_BAD_REQUEST, "Bad request data")
         new_count = int(data["counter"])
         app.logger.info("Setting counter to %s", new_count)
         counter.value = new_count
     except Exception as err:
-        abort(503, err)
-    return jsonify(counter=counter.value), 200
+        abort(status.HTTP_503_SERVICE_UNAVAILABLE, err)
+    return jsonify(counter=counter.value), status.HTTP_200_OK
 
 
 @app.route("/counter", methods=["DELETE"])
@@ -104,8 +115,8 @@ def delete_counter():
     try:
         del counter.value
     except Exception as err:
-        abort(503, err)
-    return "", 204
+        abort(status.HTTP_503_SERVICE_UNAVAILABLE, err)
+    return "", status.HTTP_204_NO_CONTENT
 
 
 @app.before_first_request
@@ -116,6 +127,6 @@ def init_db():
         counter = Counter()
         counter.connect(DATABASE_URI)
         counter.value = 0
-        app.logger.info('The Counter is now: %d', counter.value)
+        app.logger.info("The Counter is now: %d", counter.value)
     except Exception as err:
         app.logger.error(str(err))

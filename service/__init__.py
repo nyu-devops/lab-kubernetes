@@ -1,4 +1,4 @@
-# Copyright 2016, 2019 John J. Rofrano. All Rights Reserved.
+# Copyright 2016, 2020 John J. Rofrano. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 """
 Package for the application models and service routes
 """
+import os
 import logging
 from flask import Flask
 
@@ -22,11 +23,13 @@ from flask import Flask
 # The Flask app must be created
 # BEFORE you import modules that depend on it !!!
 
+DATABASE_URI = os.getenv("DATABASE_URI", "redis://:@localhost:6379/0")
+
 # Create the Flask aoo
 app = Flask(__name__)
 
 # Import the routes After the Flask app is created
-from service import service, models
+from service import routes, models
 
 # Set up logging for production
 app.logger.propagate = False

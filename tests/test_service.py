@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2016, 2019 John J. Rofrano. All Rights Reserved.
+# Copyright 2016, 2020 John J. Rofrano. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,28 +14,51 @@
 # limitations under the License.
 
 """
-Test cases for Counter Service
+Counter API Service Test Suite
 
-Test cases can be run with:
-  python -m unittest discover
-  nosetests
+Test cases can be run with the following:
+  nosetests -v --with-spec --spec-color
   coverage report -m
-  nosetests --stop tests/test_service.py:ServiceTest
 """
 import os
 import logging
 from unittest import TestCase
 from unittest.mock import patch
-import service
+from flask_api import status  # HTTP Status Codes
+from service import app, DATABASE_URI
 
 DATABASE_URI = os.getenv("DATABASE_URI", "redis://:@localhost:6379/0")
 
+logging.disable(logging.CRITICAL)
 
+######################################################################
+#  T E S T   C A S E S
+######################################################################
 class ServiceTest(TestCase):
+    """ REST API Server Tests """
+
+    @classmethod
+    def setUpClass(cls):
+        """ This runs once before the entire test suite """
+        app.testing = True
+        app.debug = False
+
+    @classmethod
+    def tearDownClass(cls):
+        """ This runs once after the entire test suite """
+        pass
+
     def setUp(self):
-        service.app.debug = False
-        service.service.DATABASE_URI = DATABASE_URI
-        self.app = service.app.test_client()
+        """ This runs before each test """
+        self.app = app.test_client()
+
+    def tearDown(self):
+        """ This runs after each test """
+        pass
+
+    ######################################################################
+    #  T E S T   C A S E S
+    ######################################################################
 
     def test_index(self):
         """ Get the home page """
@@ -67,6 +90,11 @@ class ServiceTest(TestCase):
         new_count = int(data["counter"])
         self.assertEqual(new_count, count + 2)
 
+    def test_delete_counter(self):
+        """ Delete the counter """
+        resp = self.app.delete("/counter")
+        self.assertEquals(resp.status_code, 204)
+
     def test_reset_the_counter(self):
         # post and make sure the counter is increments
         resp = self.app.post("/counter")
@@ -93,13 +121,21 @@ class ServiceTest(TestCase):
     #  T E S T   E R R O R   H A N D L E R S
     ######################################################################
 
-    # @patch('service.models.Counter.value')
+    # @patch("service.routes.Counter.value")
     # def test_failed_get_request(self, value_mock):
     #     """ Error handlers for failed GET """
     #     value_mock.return_value = 0
     #     value_mock.side_effect = Exception()
-    #     resp = self.app.get('/counter')
-    #     self.assertEqual(resp.status_code, 500)
+    #     resp = self.app.get("/counter")
+    #     self.assertEqual(resp.status_code, 503)
+    
+    @patch("service.models.Counter.increment")
+    def test_failed_update_request(self, value_mock):
+        """ Error handlers for failed UPDATE """
+        value_mock.return_value = 0
+        value_mock.side_effect = Exception()
+        resp = self.app.put("/counter")
+        self.assertEqual(resp.status_code, 503)
 
     @patch("service.models.Counter.increment")
     def test_failed_post_request(self, value_mock):
@@ -109,22 +145,10 @@ class ServiceTest(TestCase):
         resp = self.app.post("/counter")
         self.assertEqual(resp.status_code, 503)
 
-    # @patch("service.models.Counter.value")
-    # def test_failed_delete_request(self, value_mock):
-    #     """ Error handlers for failed DELETE """
-    #     value_mock.return_value = 0
-    #     value_mock.side_effect = Exception()
-    #     resp = self.app.delete("/counter")
-    #     self.assertEqual(resp.status_code, 503)
-
-    # @patch('flask.request.get_json')
-    # def test_failed_post_request(self, value_mock):
-    #     """ Error handlers for failed PUT """
-    #     value_mock.side_effect = Exception()
-    #     data = {"counter": 0}
-    #     resp = self.app.put('/counter', json=data)
-    #     self.assertEqual(resp.status_code, 500)
-
-
-if __name__ == "__main__":
-    unittest.main()
+    @patch("service.models.Counter.value")
+    def test_failed_delete_request(self, value_mock):
+        """ Error handlers for failed DELETE """
+        value_mock.return_value = 0
+        value_mock.side_effect = Exception()
+        resp = self.app.delete("/counter")
+        self.assertEqual(resp.status_code, 503)
