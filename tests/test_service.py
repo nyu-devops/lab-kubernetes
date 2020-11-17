@@ -26,10 +26,11 @@ from unittest import TestCase
 from unittest.mock import patch
 from flask_api import status  # HTTP Status Codes
 from service import app, DATABASE_URI
+from service.models import Counter
 
 DATABASE_URI = os.getenv("DATABASE_URI", "redis://:@localhost:6379/0")
 
-logging.disable(logging.CRITICAL)
+# logging.disable(logging.CRITICAL)
 
 ######################################################################
 #  T E S T   C A S E S
@@ -50,6 +51,8 @@ class ServiceTest(TestCase):
 
     def setUp(self):
         """ This runs before each test """
+        Counter.connect(DATABASE_URI)
+        Counter.remove_all()
         self.app = app.test_client()
 
     def tearDown(self):
@@ -65,90 +68,101 @@ class ServiceTest(TestCase):
         resp = self.app.get("/")
         self.assertEquals(resp.status_code, 200)
 
-    def test_get_counter(self):
+    def test_create_counter(self):
+        """ Create a counter """
+        resp = self.app.post("/counters/foo")
+        self.assertEquals(resp.status_code, 201)
+        data = resp.get_json()
+        self.assertEqual(data["counter"], 0)
+
+    def test_counter_already_exists(self):
+        """ Counter already exists """
+        resp = self.app.post("/counters/foo")
+        self.assertEquals(resp.status_code, 201)
+        resp = self.app.post("/counters/foo")
+        self.assertEquals(resp.status_code, 409)
+
+    def test_list_counters(self):
         """ Get the counter """
-        resp = self.app.get("/counter")
+        resp = self.app.post("/counters/foo")
+        self.assertEquals(resp.status_code, 201)
+        resp = self.app.post("/counters/bar")
+        self.assertEquals(resp.status_code, 201)
+        resp = self.app.get("/counters")
         self.assertEquals(resp.status_code, 200)
         data = resp.get_json()
-        self.assertTrue(data["counter"] is not None)
+        self.assertEqual(len(data), 2)
+
+    def test_get_counter(self):
+        """ Get the counter """
+        self.test_create_counter()
+        resp = self.app.get("/counters/foo")
+        self.assertEquals(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertEqual(data["counter"], 0)
+
+    def test_get_counter_not_found(self):
+        """ Test counter not found """
+        resp = self.app.get("/counters/foo")
+        self.assertEquals(resp.status_code, 404)
+
+    def test_put_counter_not_found(self):
+        """ Test counter not found """
+        resp = self.app.put("/counters/foo")
+        self.assertEquals(resp.status_code, 404)
 
     def test_increment_counter(self):
         """ Increment the counter """
-        resp = self.app.get("/counter")
-        self.assertEqual(resp.status_code, 200)
+        self.test_get_counter()
+        resp = self.app.put("/counters/foo")
+        self.assertEquals(resp.status_code, 200)
         data = resp.get_json()
-        count = int(data["counter"])
+        self.assertEqual(data["counter"], 1)
 
-        # post and make sure the counter is increments
-        resp = self.app.post("/counter")
-        self.assertEqual(resp.status_code, 201)
-        resp = self.app.post("/counter")
-        self.assertEqual(resp.status_code, 201)
-
-        # check that it was incremented by 2
+        resp = self.app.put("/counters/foo")
+        self.assertEquals(resp.status_code, 200)
         data = resp.get_json()
-        new_count = int(data["counter"])
-        self.assertEqual(new_count, count + 2)
+        logging.debug(data)
+        self.assertEqual(data["counter"], 2)
 
     def test_delete_counter(self):
         """ Delete the counter """
-        resp = self.app.delete("/counter")
+        self.test_create_counter()
+        resp = self.app.delete("/counters/foo")
         self.assertEquals(resp.status_code, 204)
 
-    def test_reset_the_counter(self):
-        # post and make sure the counter is increments
-        resp = self.app.post("/counter")
-        self.assertEqual(resp.status_code, 201)
-        resp = self.app.post("/counter")
-        self.assertEqual(resp.status_code, 201)
+    def test_method_not_allowed(self):
+        """ Test Method Not Allowed """
+        resp = self.app.post("/counters")
+        self.assertEquals(resp.status_code, 405)
 
-        # make sure the counter is not zero
-        resp = self.app.get("/counter")
-        self.assertEqual(resp.status_code, 200)
-        data = resp.get_json()
-        count = int(data["counter"])
-        self.assertGreater(count, 0)
-
-        # now reset the counter to zero
-        data = {"counter": 0}
-        resp = self.app.put("/counter", json=data)
-        self.assertEqual(resp.status_code, 200)
-        new_data = resp.get_json()
-        new_count = int(new_data["counter"])
-        self.assertEquals(new_count, 0)
 
     ######################################################################
     #  T E S T   E R R O R   H A N D L E R S
     ######################################################################
 
-    # @patch("service.routes.Counter.value")
-    # def test_failed_get_request(self, value_mock):
-    #     """ Error handlers for failed GET """
-    #     value_mock.return_value = 0
-    #     value_mock.side_effect = Exception()
-    #     resp = self.app.get("/counter")
-    #     self.assertEqual(resp.status_code, 503)
+    @patch("service.routes.Counter.find")
+    def test_failed_get_request(self, value_mock):
+        """ Error handlers for failed GET """
+        value_mock.return_value = 0
+        value_mock.side_effect = Exception()
+        resp = self.app.get("/counters/foo")
+        self.assertEqual(resp.status_code, 503)
     
     @patch("service.models.Counter.increment")
     def test_failed_update_request(self, value_mock):
         """ Error handlers for failed UPDATE """
         value_mock.return_value = 0
         value_mock.side_effect = Exception()
-        resp = self.app.put("/counter")
+        self.test_create_counter()
+        resp = self.app.put("/counters/foo")
         self.assertEqual(resp.status_code, 503)
 
-    @patch("service.models.Counter.increment")
+    @patch("service.models.Counter.__init__")
     def test_failed_post_request(self, value_mock):
         """ Error handlers for failed POST """
         value_mock.return_value = 0
         value_mock.side_effect = Exception()
-        resp = self.app.post("/counter")
+        resp = self.app.post("/counters/foo")
         self.assertEqual(resp.status_code, 503)
 
-    @patch("service.models.Counter.value")
-    def test_failed_delete_request(self, value_mock):
-        """ Error handlers for failed DELETE """
-        value_mock.return_value = 0
-        value_mock.side_effect = Exception()
-        resp = self.app.delete("/counter")
-        self.assertEqual(resp.status_code, 503)

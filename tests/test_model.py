@@ -37,12 +37,20 @@ logging.disable(logging.CRITICAL)
 class CounterTests(TestCase):
     """ Counter Model Tests """
 
+    @classmethod
+    def setUpClass(cls):
+        """ Run before all tests """
+        # Counter.connect(DATABASE_URI)
+
     def setUp(self):
         """ This runs before each test """
+        Counter.connect(DATABASE_URI)
+        Counter.remove_all()
         self.counter = Counter()
 
     def tearDown(self):
         """ This runs after each test """
+        # Counter.redis.flushall()
         pass
 
     ######################################################################
@@ -54,27 +62,57 @@ class CounterTests(TestCase):
         counter = Counter("foo")
         self.assertIsNotNone(counter)
         self.assertEqual(counter.name, "foo")
+        self.assertEqual(counter.value, 0)
 
     def test_create_counter_no_name(self):
         """ Create a counter without a name """
         self.assertIsNotNone(self.counter)
         self.assertEqual(self.counter.name, "hits")
+        self.assertEqual(self.counter.value, 0)
+
+    def test_serialize_counter(self):
+        """ Serialize a counter """
+        self.assertIsNotNone(self.counter)
+        data = self.counter.serialize()
+        self.assertEqual(data["name"], "hits")
+        self.assertEqual(data["counter"], 0)
+
+    def test_set_list_counters(self):
+        """ List all of the counter """
+        _ = Counter("foo")
+        _ = Counter("bar")
+        counters = Counter.all()
+        self.assertEqual(len(counters), 3)
+
+    def test_set_find_counter(self):
+        """ Find a counter """
+        _ = Counter("foo")
+        _ = Counter("bar")
+        foo = Counter.find("foo")
+        self.assertEqual(foo.name, "foo")
+
+    def test_counter_not_found(self):
+        """ counter not found """
+        foo = Counter.find("foo")
+        self.assertIsNone(foo)
 
     def test_set_get_counter(self):
         """ Set and then Get the counter """
-        self.counter.connect(DATABASE_URI)
         self.counter.value = 13
         self.assertEqual(self.counter.value, 13)
 
     def test_delete_counter(self):
         """ Delete a counter """
-        self.counter.connect(DATABASE_URI)
-        del self.counter.value
+        counter = Counter("foo")
+        self.assertEqual(counter.value, 0)
+        del counter.value
+        found = Counter.find("foo")
+        self.assertIsNone(found)
+
         self.assertEqual(self.counter.value, 0)
 
     def test_increment_counter(self):
         """ Increment the current value of the counter by 1 """
-        self.counter.connect(DATABASE_URI)
         count = self.counter.value
         next_count = self.counter.increment()
         logging.debug(
@@ -86,6 +124,15 @@ class CounterTests(TestCase):
         )
         self.assertEqual(next_count, count + 1)
 
+    def test_increment_counter_to_2(self):
+        """ Increment the counter to 2 """
+        self.assertEqual(self.counter.value, 0)
+        self.counter.increment()
+        self.assertEqual(self.counter.value, 1)
+        counter = Counter.find("hits")
+        self.counter.increment()
+        self.assertEqual(self.counter.value, 2)
+
     @patch("redis.Redis.ping")
     def test_no_connection(self, ping_mock):
         """ Handle failed connection """
@@ -96,7 +143,7 @@ class CounterTests(TestCase):
     def test_environment_uri(self):
         """ Get DATABASE_URI from environment """
         self.counter.connect()
-        self.assertTrue(Counter.test_connecion)
+        self.assertTrue(Counter.test_connection)
 
     @patch.dict(os.environ, {"DATABASE_URI": ""})
     def test_missing_environment_creds(self):

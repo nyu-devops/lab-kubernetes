@@ -44,9 +44,13 @@ class Counter(object):
 
     redis = None
 
-    def __init__(self, name="hits"):
+    def __init__(self, name: str="hits", value: int=None):
         """ Constructor """
         self.name = name
+        if not value:
+            self.value = 0
+        else:
+            self.value = value
 
     @property
     def value(self):
@@ -60,19 +64,43 @@ class Counter(object):
 
     @value.deleter
     def value(self):
-        """ Sets the value of the counter to zero (0) """
-        Counter.redis.set(self.name, 0)
+        """ Removes the counter fom the database """
+        Counter.redis.delete(self.name)
 
     def increment(self):
         """ Increments the current value of the counter by 1 """
         return Counter.redis.incr(self.name)
+
+    def serialize(self):
+        return dict(name=self.name, counter=int(Counter.redis.get(self.name)))
+
+    ######################################################################
+    #  F I N D E R   M E T H O D S
+    ######################################################################
+
+    @classmethod
+    def all(cls):
+        """ Returns all of the counters """
+        return [dict(name=key, counter=int(cls.redis.get(key))) for key in cls.redis.keys('*')]
+
+    @classmethod
+    def find(cls, name):
+        """ Finds a counter with the name or returns None """
+        count = cls.redis.get(name)
+        if count:
+            return Counter(name, count)
+        return None
+
+    @classmethod
+    def remove_all(cls):
+        cls.redis.flushall()
 
     ######################################################################
     #  R E D I S   D A T A B A S E   C O N N E C T I O N   M E T H O D S
     ######################################################################
 
     @classmethod
-    def test_connecion(cls):
+    def test_connection(cls):
         """ Test connection by pinging the host """
         success = False
         try:
@@ -101,16 +129,13 @@ class Counter(object):
                 logger.error(msg)
                 raise DatabaseConnectionError(msg)
 
-        # if not database_uri:
-        #     raise DatabaseConnectionError("Missing database URI")
-
         logger.info("Attempting to connecting to Redis...")
 
         cls.redis = Redis.from_url(
             database_uri, encoding="utf-8", decode_responses=True
         )
 
-        if not cls.test_connecion():
+        if not cls.test_connection():
             # if you end up here, redis instance is down.
             cls.redis = None
             logger.fatal("*** FATAL ERROR: Could not connect to the Redis Service")

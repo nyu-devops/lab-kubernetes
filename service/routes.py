@@ -15,7 +15,7 @@
 Redis Counter Demo in Docker
 """
 import os
-from flask import jsonify, json, abort, request
+from flask import jsonify, json, abort, request, url_for
 from flask_api import status  # HTTP Status Codes
 from . import app
 from service import DATABASE_URI
@@ -24,13 +24,11 @@ from .models import Counter, DatabaseConnectionError
 DEBUG = os.getenv("DEBUG", "False") == "True"
 PORT = os.getenv("PORT", "5000")
 
-counter = None
-
 ######################################################################
 #   E R R O R   H A N D L E R S
 ######################################################################
 @app.errorhandler(status.HTTP_503_SERVICE_UNAVAILABLE)
-def internal_server_error(error):
+def service_unavailable(error):
     """ Handles unexpected server error with 503_SERVICE_UNAVAILABLE """
     message = str(error)
     app.logger.error(message)
@@ -45,88 +43,157 @@ def internal_server_error(error):
 
 
 @app.errorhandler(status.HTTP_400_BAD_REQUEST)
-def internal_server_error(error):
-    """ Handles bad requiest data """
-    message = str(error)
-    app.logger.error(message)
+def bad_request(error):
+    """ Handles bad reuests with 400_BAD_REQUEST """
+    app.logger.warning(str(error))
     return (
         jsonify(
-            status=status.HTTP_400_BAD_REQUEST, error="Bad Request", message=message
+            status=status.HTTP_400_BAD_REQUEST, error="Bad Request", message=str(error)
         ),
         status.HTTP_400_BAD_REQUEST,
     )
 
 
-######################################################################
-#   A P P L I C A T I O N   R O U T E S
-######################################################################
+@app.errorhandler(status.HTTP_404_NOT_FOUND)
+def not_found(error):
+    """ Handles resources not found with 404_NOT_FOUND """
+    app.logger.warning(str(error))
+    return (
+        jsonify(
+            status=status.HTTP_404_NOT_FOUND, error="Not Found", message=str(error)
+        ),
+        status.HTTP_404_NOT_FOUND,
+    )
 
-# GET /
+
+@app.errorhandler(status.HTTP_405_METHOD_NOT_ALLOWED)
+def method_not_supported(error):
+    """ Handles unsuppoted HTTP methods with 405_METHOD_NOT_SUPPORTED """
+    app.logger.warning(str(error))
+    return (
+        jsonify(
+            status=status.HTTP_405_METHOD_NOT_ALLOWED,
+            error="Method not Allowed",
+            message=str(error),
+        ),
+        status.HTTP_405_METHOD_NOT_ALLOWED,
+    )
+
+
+@app.errorhandler(status.HTTP_500_INTERNAL_SERVER_ERROR)
+def internal_server_error(error):
+    """ Handles unexpected server error with 500_SERVER_ERROR """
+    app.logger.error(str(error))
+    return (
+        jsonify(
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            error="Internal Server Error",
+            message=str(error),
+        ),
+        status.HTTP_500_INTERNAL_SERVER_ERROR,
+    )
+
+
+############################################################
+# Home Page
+############################################################
 @app.route("/")
 def index():
     """ Home Page """
     return app.send_static_file("index.html")
 
+############################################################
+# List counters
+############################################################
+@app.route("/counters", methods=["GET"])
+def list_counters():
+    app.logger.info("Request to list all counters...")
+    counters = Counter.all()
+    return jsonify(counters)
 
-# GET /counter
-@app.route("/counter", methods=["GET"])
-def get_counter():
-    """ get the counter """
-    app.logger.info("Request to get counter")
+
+############################################################
+# Read counters
+############################################################
+@app.route("/counters/<name>", methods=["GET"])
+def read_counters(name):
+    app.logger.info("Request to Read counter: {}...".format(name))
+
     try:
-        count = counter.value
+        counter = Counter.find(name)
     except Exception as err:
         abort(status.HTTP_503_SERVICE_UNAVAILABLE, err)
-    return jsonify(counter=count), status.HTTP_200_OK
+
+    if not counter:
+        abort(status.HTTP_404_NOT_FOUND, "Counter {} does not exist".format(name))
+
+    app.logger.info("Returning: {}...".format(counter.value))
+    return jsonify(counter.serialize())
 
 
-# POST /counter
-@app.route("/counter", methods=["POST"])
-def increment_counter():
-    """ Increment the counter """
-    app.logger.info("Request to increment counter")
+############################################################
+# Create counter
+############################################################
+@app.route("/counters/<name>", methods=["POST"])
+def create_counters(name):
+    app.logger.info("Request to Create counter...")
+    counter = Counter.find(name)
+    if counter is not None:
+        return jsonify(code=409, error="Counter already exists"), 409
+
+    try:
+        counter = Counter(name)
+    except Exception as err:
+        abort(status.HTTP_503_SERVICE_UNAVAILABLE, err)
+
+    location_url = url_for('read_counters', name=name, _external=True)
+    return jsonify(counter.serialize()), status.HTTP_201_CREATED, {'Location': location_url}
+
+
+############################################################
+# Update counters
+############################################################
+@app.route("/counters/<name>", methods=["PUT"])
+def update_counters(name):
+    app.logger.info("Request to Update counter...")
+    counter = Counter.find(name)
+    if counter is None:
+        return jsonify(code=404, error="Counter {} does not exist".format(name)), 404
+
     try:
         count = counter.increment()
     except Exception as err:
         abort(status.HTTP_503_SERVICE_UNAVAILABLE, err)
-    return jsonify(counter=count), status.HTTP_201_CREATED
+
+    return jsonify(name=name, counter=count)
 
 
-@app.route("/counter", methods=["PUT"])
-def set_counter():
-    """ Set the counter """
-    app.logger.info("Request to set counter")
+############################################################
+# Delete counters
+############################################################
+@app.route("/counters/<name>", methods=["DELETE"])
+def delete_counters(name):
+    app.logger.info("Request to Delete counter...")
+    counter = Counter.find(name)
+    
     try:
-        data = request.get_json()
-        if not data:
-            abort(status.HTTP_400_BAD_REQUEST, "Bad request data")
-        new_count = int(data["counter"])
-        app.logger.info("Setting counter to %s", new_count)
-        counter.value = new_count
+        if counter:
+            del counter.value
     except Exception as err:
         abort(status.HTTP_503_SERVICE_UNAVAILABLE, err)
-    return jsonify(counter=counter.value), status.HTTP_200_OK
 
-
-@app.route("/counter", methods=["DELETE"])
-def delete_counter():
-    """ Delete the counter """
-    app.logger.info("Request to delete counter")
-    try:
-        del counter.value
-    except Exception as err:
-        abort(status.HTTP_503_SERVICE_UNAVAILABLE, err)
     return "", status.HTTP_204_NO_CONTENT
 
 
+############################################################
+#  U T I L I T Y   F U N C I O N S
+############################################################
+
 @app.before_first_request
 def init_db():
-    global counter
     try:
         app.logger.info("Initializing the Redis database")
-        counter = Counter()
-        counter.connect(DATABASE_URI)
-        counter.value = 0
-        app.logger.info("The Counter is now: %d", counter.value)
+        Counter.connect(DATABASE_URI)
+        app.logger.info("Connected!")
     except Exception as err:
         app.logger.error(str(err))
