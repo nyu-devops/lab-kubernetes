@@ -16,19 +16,21 @@ end
 # Kubernetes Minikube Environment
 ######################################################################
 Vagrant.configure(2) do |config|
-  config.vm.box = "ubuntu/bionic64"
+  # config.vm.box = "ubuntu/bionic64"
+  config.vm.box = "bento/ubuntu-20.04"
   config.vm.hostname = "kubernetes"
 
   # config.vm.network "forwarded_port", guest: 80, host: 8080
-  # expose port 8080 in the guest VM to 8080 on the host computer
-  config.vm.network "forwarded_port", guest: 80,   host: 1080, host_ip: "127.0.0.1"
-  config.vm.network "forwarded_port", guest: 8001, host: 8001, host_ip: "127.0.0.1"
   config.vm.network "forwarded_port", guest: 8080, host: 8080, host_ip: "127.0.0.1"
   config.vm.network "forwarded_port", guest: 5000, host: 5000, host_ip: "127.0.0.1"
 
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
   config.vm.network "private_network", ip: "192.168.33.10"
+
+  # Mac users can comment this next line out but
+  # Windows users need to change the permission of files and directories
+  config.vm.synced_folder ".", "/vagrant", mount_options: ["dmode=755,fmode=644"]
 
   ############################################################
   # Configure Vagrant to use VirtualBox:
@@ -75,13 +77,14 @@ Vagrant.configure(2) do |config|
   config.vm.provision "shell", inline: <<-SHELL
     # Update and install
     apt-get update
-    apt-get install -y git tree wget build-essential python3-dev python3-pip python3-venv apt-transport-https
+    apt-get install -y git tree wget jq build-essential python3-dev python3-pip python3-venv apt-transport-https
     apt-get upgrade python3
-
     # Create a Python3 Virtual Environment and Activate it in .profile
     sudo -H -u vagrant sh -c 'python3 -m venv ~/venv'
     sudo -H -u vagrant sh -c 'echo ". ~/venv/bin/activate" >> ~/.profile'
-    sudo -H -u vagrant sh -c '. ~/venv/bin/activate && cd /vagrant && pip install -r requirements.txt'
+    sudo -H -u vagrant sh -c '. ~/venv/bin/activate && pip install -U pip && pip install wheel && cd /vagrant && pip install -r requirements.txt'
+    # Check versions to prove that everything is installed
+    python3 --version
   SHELL
 
   ############################################################
@@ -89,10 +92,10 @@ Vagrant.configure(2) do |config|
   ############################################################
   config.vm.provision "docker" do |d|
     d.pull_images "alpine"
-    d.pull_images "python:3.7-slim"
-    d.pull_images "redis:alpine"
-    d.run "redis:alpine",
-      args: "--restart=always -d --name redis -p 6379:6379 -v redis_volume:/data"
+    d.pull_images "python:3.8-slim"
+    d.pull_images "redis:6-alpine"
+    d.run "redis:6-alpine",
+      args: "--restart=always -d --name redis -p 6379:6379 -v redis:/data"
   end
 
   ############################################################
@@ -109,11 +112,25 @@ Vagrant.configure(2) do |config|
   ############################################################
   config.vm.provision "shell", inline: <<-SHELL
     # install MicroK8s version of Kubernetes
-    sudo snap install microk8s --classic
-    sudo microk8s.enable dns dashboard ingress registry
-    sudo usermod -a -G microk8s vagrant
-    sudo -H -u vagrant sh -c 'echo "alias kubectl=/snap/bin/microk8s.kubectl" >> ~/.bashrc'
-    /snap/bin/microk8s.kubectl version --short
+    snap install microk8s --classic
+    microk8s.status --wait-ready
+    microk8s.enable dns
+    microk8s.enable dashboard
+    microk8s.enable registry
+    # microk8s.kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/mandatory.yaml
+    microk8s.enable ingress
+    snap alias microk8s.kubectl kubectl
+    usermod -a -G microk8s vagrant
+    # Create aliases for microk8s=mk and kubecl=kc
+    echo "alias mk='/snap/bin/microk8s'" >> /home/vagrant/.bash_aliases
+    echo "alias kc='/snap/bin/kubectl'" >> /home/vagrant/.bash_aliases
+    chown vagrant:vagrant /home/vagrant/.bash_aliases
+    # Set up Kubernetes context
+    sudo -H -u vagrant sh -c 'mkdir ~/.kube && microk8s.kubectl config view --raw > ~/.kube/config'
+    kubectl version --short  
+    microk8s.config > /home/vagrant/.kube/config
+    chown vagrant:vagrant /home/vagrant/.kube/config
+    chmod 600 /home/vagrant/.kube/config
   SHELL
 
 

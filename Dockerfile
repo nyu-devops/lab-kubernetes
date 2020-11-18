@@ -1,12 +1,12 @@
-FROM python:3.7-slim
+FROM python:3.8-slim
 
 # Create working folder and install dependencies
 WORKDIR /app
-COPY requirements.txt /app
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the application contents
-COPY service/ /app/service/
+COPY service/ ./service/
 
 # Expose any ports the app is expecting in the environment
 ENV PORT 8080
