@@ -8,6 +8,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the application contents
 COPY service/ ./service/
 
+# Switch to a non-root user
+RUN useradd appuser && chown -R appuser /app
+USER appuser
+
 # Expose any ports the app is expecting in the environment
 ENV PORT 8080
 EXPOSE $PORT
