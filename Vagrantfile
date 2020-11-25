@@ -111,19 +111,28 @@ Vagrant.configure(2) do |config|
   # Create a Kubernetes Cluster
   ############################################################
   config.vm.provision "shell", inline: <<-SHELL
+    # install Kubernetes CLI (kubectl)
+    # curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
+    # chmod +x ./kubectl
+    # mv ./kubectl /usr/local/bin/kubectl
+    apt-get update && sudo apt-get install -y apt-transport-https gnupg2
+    curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+    echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
+    apt-get update
+    apt-get install -y kubectl
+    echo "alias kc='/usr/bin/kubectl" >> /home/vagrant/.bash_aliases
     # install MicroK8s version of Kubernetes
     snap install microk8s --classic
     microk8s.status --wait-ready
     microk8s.enable dns
     microk8s.enable dashboard
     microk8s.enable registry
-    # microk8s.kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/mandatory.yaml
     microk8s.enable ingress
-    snap alias microk8s.kubectl kubectl
+    #snap alias microk8s.kubectl kubectl
     usermod -a -G microk8s vagrant
     # Create aliases for microk8s=mk and kubecl=kc
     echo "alias mk='/snap/bin/microk8s'" >> /home/vagrant/.bash_aliases
-    echo "alias kc='/snap/bin/kubectl'" >> /home/vagrant/.bash_aliases
+    #echo "alias kc='/snap/bin/kubectl'" >> /home/vagrant/.bash_aliases
     chown vagrant:vagrant /home/vagrant/.bash_aliases
     # Set up Kubernetes context
     sudo -H -u vagrant sh -c 'mkdir ~/.kube && microk8s.kubectl config view --raw > ~/.kube/config'
