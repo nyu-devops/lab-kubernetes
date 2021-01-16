@@ -28,6 +28,12 @@ spec:
               secretKeyRef:
                 name: redis-creds
                 key: uri
+        readinessProbe:
+          initialDelaySeconds: 5
+          periodSeconds: 30
+          httpGet:
+            path: /health
+            port: 8080
         resources:
           limits:
             cpu: "0.5"

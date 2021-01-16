@@ -151,10 +151,22 @@ Vagrant.configure(2) do |config|
     echo " Installing IBM Cloud CLI..."
     echo "************************************\n"
     # Install IBM Cloud CLI as Vagrant user
-    sudo -H -u vagrant sh -c 'curl -sL http://ibm.biz/idt-installer | bash'
+    sudo -H -u vagrant sh -c 'curl -sL https://ibm.biz/idt-installer | bash'
     sudo -H -u vagrant sh -c 'ibmcloud config --usage-stats-collect false'
     sudo -H -u vagrant sh -c "echo 'source <(kubectl completion bash)' >> ~/.bashrc"
     sudo -H -u vagrant sh -c "echo alias ic=/usr/local/bin/ibmcloud >> ~/.bash_aliases"
+    # Install OpenShift Client (optional)
+    # mkdir ./openshift-client
+    # cd openshift-client
+    # wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
+    # tar xzf openshift-client-linux.tar.gz
+    # cp kubectl /usr/local/bin
+    # cp oc /usr/local/bin
+    # cd ..
+    # rmdir -fr ./openshift-client
+    #
+    # Install the IBM Cloud Native Toolkit
+    # curl -sL shell.cloudnativetoolkit.dev | sh - && . ~/.bashrc
     echo "\n"
     echo "\n************************************"
     echo " For the Kubernetes Dashboard use:"

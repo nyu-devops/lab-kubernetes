@@ -13,6 +13,7 @@ RUN useradd appuser && chown -R appuser /app
 USER appuser
 
 # Expose any ports the app is expecting in the environment
+ENV FLASK_APP=service:app
 ENV PORT 8080
 EXPOSE $PORT
 

@@ -93,6 +93,14 @@ def internal_server_error(error):
         status.HTTP_500_INTERNAL_SERVER_ERROR,
     )
 
+############################################################
+# Health Endpoint
+############################################################
+@app.route("/health")
+def index():
+    """ Health Status """
+    return jsonify(dict(status="OK")), status.HTTP_200_OK
+
 
 ############################################################
 # Home Page

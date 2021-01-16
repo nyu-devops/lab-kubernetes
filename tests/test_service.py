@@ -68,6 +68,13 @@ class ServiceTest(TestCase):
         resp = self.app.get("/")
         self.assertEquals(resp.status_code, 200)
 
+    def test_health(self):
+        """ Get the health endpoint """
+        resp = self.app.get("/health")
+        self.assertEquals(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertEqual(data["status"], "OK")
+
     def test_create_counter(self):
         """ Create a counter """
         resp = self.app.post("/counters/foo")
