@@ -1,17 +1,6 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-# WARNING: You will need the following plugin:
-# vagrant plugin install vagrant-docker-compose
-if Vagrant.plugins_enabled?
-  unless Vagrant.has_plugin?('vagrant-docker-compose')
-    puts 'Plugin missing.'
-    system('vagrant plugin install vagrant-docker-compose')
-    puts 'Dependencies installed, please try the command again.'
-    exit
-  end
-end
-
 ######################################################################
 # Kubernetes Minikube Environment
 ######################################################################
@@ -21,7 +10,7 @@ Vagrant.configure(2) do |config|
   config.vm.hostname = "kubernetes"
 
   # config.vm.network "forwarded_port", guest: 80, host: 8080
-  config.vm.network "forwarded_port", guest: 8080, host: 8080, host_ip: "127.0.0.1"
+  # config.vm.network "forwarded_port", guest: 8080, host: 8080, host_ip: "127.0.0.1"
   config.vm.network "forwarded_port", guest: 5000, host: 5000, host_ip: "127.0.0.1"
 
   # Create a private network, which allows host-only access to the machine
@@ -33,7 +22,7 @@ Vagrant.configure(2) do |config|
   config.vm.synced_folder ".", "/vagrant", mount_options: ["dmode=755,fmode=644"]
 
   ############################################################
-  # Configure Vagrant to use VirtualBox:
+  # Configure Vagrant to use VirtualBox on Intel:
   ############################################################
   config.vm.provider "virtualbox" do |vb|
     # Customize the amount of memory on the VM:
@@ -42,6 +31,20 @@ Vagrant.configure(2) do |config|
     # Fixes some DNS issues on some networks
     vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
     vb.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+  end
+
+  ############################################################
+  # Configure Vagrant to use for Docker on Intel or ARM
+  ############################################################
+  config.vm.provider :docker do |docker, override|
+    override.vm.box = nil
+    docker.image = "rofrano/vagrant-provider:debian"
+    docker.remains_running = true
+    docker.has_ssh = true
+    docker.privileged = true
+    docker.volumes = ["/sys/fs/cgroup:/sys/fs/cgroup:ro"]
+    # Uncomment to force arm64 for testing images on Intel
+    # docker.create_args = ["--platform=linux/arm64"]
   end
 
   ############################################################
@@ -57,9 +60,6 @@ Vagrant.configure(2) do |config|
   if File.exists?(File.expand_path("~/.ssh/id_rsa"))
     config.vm.provision "file", source: "~/.ssh/id_rsa", destination: "~/.ssh/id_rsa"
   end
-  if File.exists?(File.expand_path("~/.ssh/id_rsa.pub"))
-    config.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/id_rsa.pub"
-  end
 
   # Copy your .vimrc file so that your VI editor looks right
   if File.exists?(File.expand_path("~/.vimrc"))
@@ -71,18 +71,24 @@ Vagrant.configure(2) do |config|
     config.vm.provision "file", source: "~/.bluemix/apiKey.json", destination: "~/.bluemix/apiKey.json"
   end
 
-  ############################################################
-  # Create a Python 3 environment for development work
-  ############################################################
+  ######################################################################
+  # Create a Python 3 development environment
+  ######################################################################
   config.vm.provision "shell", inline: <<-SHELL
-    # Update and install
+    # Install Python 3 and dev tools 
     apt-get update
-    apt-get install -y git tree wget jq build-essential python3-dev python3-pip python3-venv apt-transport-https
+    apt-get install -y git vim tree wget jq build-essential python3-dev python3-pip python3-venv apt-transport-https
     apt-get upgrade python3
+    
     # Create a Python3 Virtual Environment and Activate it in .profile
     sudo -H -u vagrant sh -c 'python3 -m venv ~/venv'
     sudo -H -u vagrant sh -c 'echo ". ~/venv/bin/activate" >> ~/.profile'
-    sudo -H -u vagrant sh -c '. ~/venv/bin/activate && pip install -U pip && pip install wheel && cd /vagrant && pip install -r requirements.txt'
+    
+    # Install app dependencies in virtual environment as vagrant user
+    sudo -H -u vagrant sh -c '. ~/venv/bin/activate && pip install -U pip && pip install wheel'
+    sudo -H -u vagrant sh -c '. ~/venv/bin/activate && pip install docker-compose'
+    sudo -H -u vagrant sh -c '. ~/venv/bin/activate && cd /vagrant && pip install -r requirements.txt'
+
     # Check versions to prove that everything is installed
     python3 --version
   SHELL
@@ -99,28 +105,15 @@ Vagrant.configure(2) do |config|
   end
 
   ############################################################
-  # Add Docker compose
-  ############################################################
-  config.vm.provision :docker_compose
-  # config.vm.provision :docker_compose,
-  #   yml: "/vagrant/docker-compose.yml",
-  #   rebuild: true,
-  #   run: "always"
-
-  ############################################################
   # Create a Kubernetes Cluster
   ############################################################
   config.vm.provision "shell", inline: <<-SHELL
     # install Kubernetes CLI (kubectl)
-    # curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
-    # chmod +x ./kubectl
-    # mv ./kubectl /usr/local/bin/kubectl
-    apt-get update && sudo apt-get install -y apt-transport-https gnupg2
-    curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-    echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
-    apt-get update
-    apt-get install -y kubectl
-    echo "alias kc='/usr/bin/kubectl" >> /home/vagrant/.bash_aliases
+    curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/$(dpkg --print-architecture)/kubectl"
+    install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+    rm kubectl
+    echo "alias kc='/usr/local/bin/kubectl" >> /home/vagrant/.bash_aliases
+
     # install MicroK8s version of Kubernetes
     snap install microk8s --classic
     microk8s.status --wait-ready
@@ -143,37 +136,37 @@ Vagrant.configure(2) do |config|
   SHELL
 
 
-  ######################################################################
-  # Setup an IBM Cloud and Kubernetes environment
-  ######################################################################
-  config.vm.provision "shell", inline: <<-SHELL
-    echo "\n************************************"
-    echo " Installing IBM Cloud CLI..."
-    echo "************************************\n"
-    # Install IBM Cloud CLI as Vagrant user
-    sudo -H -u vagrant sh -c 'curl -sL https://ibm.biz/idt-installer | bash'
-    sudo -H -u vagrant sh -c 'ibmcloud config --usage-stats-collect false'
-    sudo -H -u vagrant sh -c "echo 'source <(kubectl completion bash)' >> ~/.bashrc"
-    sudo -H -u vagrant sh -c "echo alias ic=/usr/local/bin/ibmcloud >> ~/.bash_aliases"
-    # Install OpenShift Client (optional)
-    # mkdir ./openshift-client
-    # cd openshift-client
-    # wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
-    # tar xzf openshift-client-linux.tar.gz
-    # cp kubectl /usr/local/bin
-    # cp oc /usr/local/bin
-    # cd ..
-    # rmdir -fr ./openshift-client
-    #
-    # Install the IBM Cloud Native Toolkit
-    # curl -sL shell.cloudnativetoolkit.dev | sh - && . ~/.bashrc
-    echo "\n"
-    echo "\n************************************"
-    echo " For the Kubernetes Dashboard use:"
-    echo " kubectl proxy --address='0.0.0.0'"
-    echo "************************************\n"
-    # Prove that plug-ins are installed as vagrant user
-    sudo -H -u vagrant bash -c "bx plugin list"
-  SHELL
+  # ######################################################################
+  # # Setup an IBM Cloud and Kubernetes environment
+  # ######################################################################
+  # config.vm.provision "shell", inline: <<-SHELL
+  #   echo "\n************************************"
+  #   echo " Installing IBM Cloud CLI..."
+  #   echo "************************************\n"
+  #   # Install IBM Cloud CLI as Vagrant user
+  #   sudo -H -u vagrant sh -c 'curl -sL https://ibm.biz/idt-installer | bash'
+  #   sudo -H -u vagrant sh -c 'ibmcloud config --usage-stats-collect false'
+  #   sudo -H -u vagrant sh -c "echo 'source <(kubectl completion bash)' >> ~/.bashrc"
+  #   sudo -H -u vagrant sh -c "echo alias ic=/usr/local/bin/ibmcloud >> ~/.bash_aliases"
+  #   # Install OpenShift Client (optional)
+  #   # mkdir ./openshift-client
+  #   # cd openshift-client
+  #   # wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
+  #   # tar xzf openshift-client-linux.tar.gz
+  #   # cp kubectl /usr/local/bin
+  #   # cp oc /usr/local/bin
+  #   # cd ..
+  #   # rmdir -fr ./openshift-client
+  #   #
+  #   # Install the IBM Cloud Native Toolkit
+  #   # curl -sL shell.cloudnativetoolkit.dev | sh - && . ~/.bashrc
+  #   echo "\n"
+  #   echo "\n************************************"
+  #   echo " For the Kubernetes Dashboard use:"
+  #   echo " kubectl proxy --address='0.0.0.0'"
+  #   echo "************************************\n"
+  #   # Prove that plug-ins are installed as vagrant user
+  #   sudo -H -u vagrant bash -c "bx plugin list"
+  # SHELL
 
 end
