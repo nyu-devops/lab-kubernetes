@@ -1,0 +1,38 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ecommerce-site
+spec:
+  rules:
+  - host: ecommerce.containers.mybluemix.net
+    http:
+      paths:
+      - path: /shopcarts
+        pathType: Prefix
+        backend:
+          service:
+            name: shopcart-service
+            port:
+              number: 5000
+      - path: /catalog
+        pathType: Prefix
+        backend:
+          service:
+            name: catalog-service
+            port:
+              number: 5000
+      - path: /orders
+        pathType: Prefix
+        backend:
+          service:
+            name: orders-service
+            port:
+              number: 5000
+      - path: /recommedations
+        pathType: Prefix
+        backend:
+          service:
+            name: recommedations-service
+            port:
+              number: 5000
