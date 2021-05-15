@@ -97,7 +97,7 @@ def internal_server_error(error):
 # Health Endpoint
 ############################################################
 @app.route("/health")
-def index():
+def health():
     """ Health Status """
     return jsonify(dict(status="OK")), status.HTTP_200_OK
 
