@@ -5,13 +5,13 @@
 # Kubernetes Minikube Environment
 ######################################################################
 Vagrant.configure(2) do |config|
-  # config.vm.box = "ubuntu/bionic64"
-  config.vm.box = "bento/ubuntu-20.04"
+  # config.vm.box = "bento/ubuntu-20.04"
+  config.vm.box = "ubuntu/focal64"
   config.vm.hostname = "kubernetes"
+  # config.vm.hostname = "ubuntu" 
 
   # config.vm.network "forwarded_port", guest: 80, host: 8080
-  # config.vm.network "forwarded_port", guest: 8080, host: 8080, host_ip: "127.0.0.1"
-  config.vm.network "forwarded_port", guest: 5000, host: 5000, host_ip: "127.0.0.1"
+  config.vm.network "forwarded_port", guest: 8080, host: 8080, host_ip: "127.0.0.1"
 
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
@@ -38,7 +38,7 @@ Vagrant.configure(2) do |config|
   ############################################################
   config.vm.provider :docker do |docker, override|
     override.vm.box = nil
-    docker.image = "rofrano/vagrant-provider:debian"
+    docker.image = "rofrano/vagrant-provider:ubuntu"
     docker.remains_running = true
     docker.has_ssh = true
     docker.privileged = true
@@ -104,37 +104,54 @@ Vagrant.configure(2) do |config|
       args: "--restart=always -d --name redis -p 6379:6379 -v redis:/data"
   end
 
+  # ############################################################
+  # # Install Kuberrnetes CLI
+  # ############################################################
+  # config.vm.provision "shell", inline: <<-SHELL
+  #   # Install kubectl
+  #   curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/$(dpkg --print-architecture)/kubectl"
+  #   install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+  #   rm kubectl
+  #   echo "alias kc='/usr/local/bin/kubectl'" >> /home/vagrant/.bash_aliases
+  #   chown vagrant:vagrant /home/vagrant/.bash_aliases
+  # SHELL
+  
+  # ############################################################
+  # # Create a Kubernetes Cluster wiith K3D
+  # ############################################################
+  # config.vm.provision "shell", inline: <<-SHELL
+  #   # Install K3d
+  #   curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
+  #   sudo -H -u vagrant sh -c "k3d registry create registry.localhost --port 50000"
+  #   sudo -H -u vagrant sh -c "k3d cluster create mycluster --registry-use k3d-registry.localhost:50000 --agents 1 --port '8080:80@loadbalancer'"
+  # SHELL
+
   ############################################################
-  # Create a Kubernetes Cluster
+  # Create a Kubernetes Cluster with MicroK8s
   ############################################################
   config.vm.provision "shell", inline: <<-SHELL
-    # install Kubernetes CLI (kubectl)
-    curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/$(dpkg --print-architecture)/kubectl"
-    install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-    rm kubectl
-    echo "alias kc='/usr/local/bin/kubectl" >> /home/vagrant/.bash_aliases
-
     # install MicroK8s version of Kubernetes
-    snap install microk8s --classic
-    microk8s.status --wait-ready
-    microk8s.enable dns
-    microk8s.enable dashboard
-    microk8s.enable registry
-    microk8s.enable ingress
-    #snap alias microk8s.kubectl kubectl
-    usermod -a -G microk8s vagrant
-    # Create aliases for microk8s=mk and kubecl=kc
-    echo "alias mk='/snap/bin/microk8s'" >> /home/vagrant/.bash_aliases
-    #echo "alias kc='/snap/bin/kubectl'" >> /home/vagrant/.bash_aliases
-    chown vagrant:vagrant /home/vagrant/.bash_aliases
-    # Set up Kubernetes context
-    sudo -H -u vagrant sh -c 'mkdir ~/.kube && microk8s.kubectl config view --raw > ~/.kube/config'
-    kubectl version --short  
-    microk8s.config > /home/vagrant/.kube/config
-    chown vagrant:vagrant /home/vagrant/.kube/config
-    chmod 600 /home/vagrant/.kube/config
+    sudo snap install microk8s --classic
+    sudo microk8s.enable dns
+    sudo microk8s.enable dashboard
+    sudo microk8s.enable ingress
+    sudo microk8s.enable registry
+    sudo usermod -a -G microk8s vagrant
+    sudo -H -u vagrant sh -c 'echo "alias kubectl=/snap/bin/microk8s.kubectl" >> ~/.bashrc'
+    /snap/bin/microk8s.kubectl version --short
+    
+    # # Create aliases for microk8s=mk and kubecl=kc
+    # echo "alias mk='/snap/bin/microk8s'" >> /home/vagrant/.bash_aliases
+    # #echo "alias kc='/snap/bin/kubectl'" >> /home/vagrant/.bash_aliases
+    # chown vagrant:vagrant /home/vagrant/.bash_aliases
+    # # Set up Kubernetes context
+    # sudo -H -u vagrant sh -c 'mkdir ~/.kube && microk8s.kubectl config view --raw > ~/.kube/config'
+    # kubectl version --short  
+    # microk8s.config > /home/vagrant/.kube/config
+    # chown vagrant:vagrant /home/vagrant/.kube/config
+    # chmod 600 /home/vagrant/.kube/config
+    
   SHELL
-
 
   # ######################################################################
   # # Setup an IBM Cloud and Kubernetes environment
