@@ -5,17 +5,20 @@
 # Kubernetes Minikube Environment
 ######################################################################
 Vagrant.configure(2) do |config|
-  # config.vm.box = "bento/ubuntu-20.04"
-  config.vm.box = "ubuntu/focal64"
-  config.vm.hostname = "kubernetes"
+  # config.vm.box = "ubuntu/focal64"
   # config.vm.hostname = "ubuntu" 
+  # config.vm.box = "debian/buster64"
+  # config.vm.box = "debian/bullseye64"
+  config.vm.box = "bento/ubuntu-21.04"
+  config.vm.hostname = "kubernetes"
 
   # config.vm.network "forwarded_port", guest: 80, host: 8080
+  config.vm.network "forwarded_port", guest: 8090, host: 8090, host_ip: "127.0.0.1"
   config.vm.network "forwarded_port", guest: 8080, host: 8080, host_ip: "127.0.0.1"
 
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
-  config.vm.network "private_network", ip: "192.168.33.10"
+  config.vm.network "private_network", ip: "192.168.56.10"
 
   # Mac users can comment this next line out but
   # Windows users need to change the permission of files and directories
@@ -29,8 +32,8 @@ Vagrant.configure(2) do |config|
     vb.memory = "4096"
     vb.cpus = 2
     # Fixes some DNS issues on some networks
-    vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
-    vb.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+    #vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+    #vb.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
   end
 
   ############################################################
@@ -38,7 +41,7 @@ Vagrant.configure(2) do |config|
   ############################################################
   config.vm.provider :docker do |docker, override|
     override.vm.box = nil
-    docker.image = "rofrano/vagrant-provider:ubuntu"
+    docker.image = "rofrano/vagrant-provider:debian"
     docker.remains_running = true
     docker.has_ssh = true
     docker.privileged = true
@@ -66,9 +69,9 @@ Vagrant.configure(2) do |config|
     config.vm.provision "file", source: "~/.vimrc", destination: "~/.vimrc"
   end
 
-  # Copy your IBM Clouid API Key if you have one
-  if File.exists?(File.expand_path("~/.bluemix/apiKey.json"))
-    config.vm.provision "file", source: "~/.bluemix/apiKey.json", destination: "~/.bluemix/apiKey.json"
+  # Copy your IBM Cloud API Key if you have one
+  if File.exists?(File.expand_path("~/.bluemix/apikey.json"))
+    config.vm.provision "file", source: "~/.bluemix/apikey.json", destination: "~/.bluemix/apikey.json"
   end
 
   ######################################################################
@@ -77,7 +80,7 @@ Vagrant.configure(2) do |config|
   config.vm.provision "shell", inline: <<-SHELL
     # Install Python 3 and dev tools 
     apt-get update
-    apt-get install -y git vim tree wget jq build-essential python3-dev python3-pip python3-venv apt-transport-https
+    apt-get install -y git vim tree wget jq python3-dev python3-pip python3-venv apt-transport-https
     apt-get upgrade python3
     
     # Create a Python3 Virtual Environment and Activate it in .profile
@@ -85,12 +88,17 @@ Vagrant.configure(2) do |config|
     sudo -H -u vagrant sh -c 'echo ". ~/venv/bin/activate" >> ~/.profile'
     
     # Install app dependencies in virtual environment as vagrant user
-    sudo -H -u vagrant sh -c '. ~/venv/bin/activate && pip install -U pip && pip install wheel'
-    sudo -H -u vagrant sh -c '. ~/venv/bin/activate && pip install docker-compose'
-    sudo -H -u vagrant sh -c '. ~/venv/bin/activate && cd /vagrant && pip install -r requirements.txt'
+    sudo -H -u vagrant sh -c '. ~/venv/bin/activate && 
+      cd /vagrant &&
+      pip install -U pip wheel && 
+      pip install docker-compose &&
+      pip install -r requirements.txt'
 
-    # Check versions to prove that everything is installed
-    python3 --version
+      # Check versions to prove that everything is installed
+      python3 --version
+
+      # Create .env file if it doesn't exist
+      sudo -H -u vagrant sh -c 'cd /vagrant && if [ ! -f .env ]; then cp dot-env-example .env; fi'    
   SHELL
 
   ############################################################
@@ -98,92 +106,61 @@ Vagrant.configure(2) do |config|
   ############################################################
   config.vm.provision "docker" do |d|
     d.pull_images "alpine"
-    d.pull_images "python:3.8-slim"
+    d.pull_images "python:3.9-slim"
     d.pull_images "redis:6-alpine"
     d.run "redis:6-alpine",
       args: "--restart=always -d --name redis -p 6379:6379 -v redis:/data"
   end
 
-  # ############################################################
-  # # Install Kuberrnetes CLI
-  # ############################################################
-  # config.vm.provision "shell", inline: <<-SHELL
-  #   # Install kubectl
-  #   curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/$(dpkg --print-architecture)/kubectl"
-  #   install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-  #   rm kubectl
-  #   echo "alias kc='/usr/local/bin/kubectl'" >> /home/vagrant/.bash_aliases
-  #   chown vagrant:vagrant /home/vagrant/.bash_aliases
-  # SHELL
-  
-  # ############################################################
-  # # Create a Kubernetes Cluster wiith K3D
-  # ############################################################
-  # config.vm.provision "shell", inline: <<-SHELL
-  #   # Install K3d
-  #   curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
-  #   sudo -H -u vagrant sh -c "k3d registry create registry.localhost --port 50000"
-  #   sudo -H -u vagrant sh -c "k3d cluster create mycluster --registry-use k3d-registry.localhost:50000 --agents 1 --port '8080:80@loadbalancer'"
-  # SHELL
-
   ############################################################
-  # Create a Kubernetes Cluster with MicroK8s
+  # Install Kubernetes CLI and Helm
   ############################################################
   config.vm.provision "shell", inline: <<-SHELL
-    # install MicroK8s version of Kubernetes
-    sudo snap install microk8s --classic
-    sudo microk8s.enable dns
-    sudo microk8s.enable dashboard
-    sudo microk8s.enable ingress
-    sudo microk8s.enable registry
-    sudo usermod -a -G microk8s vagrant
-    sudo -H -u vagrant sh -c 'echo "alias kubectl=/snap/bin/microk8s.kubectl" >> ~/.bashrc'
-    /snap/bin/microk8s.kubectl version --short
-    
-    # # Create aliases for microk8s=mk and kubecl=kc
-    # echo "alias mk='/snap/bin/microk8s'" >> /home/vagrant/.bash_aliases
-    # #echo "alias kc='/snap/bin/kubectl'" >> /home/vagrant/.bash_aliases
-    # chown vagrant:vagrant /home/vagrant/.bash_aliases
-    # # Set up Kubernetes context
-    # sudo -H -u vagrant sh -c 'mkdir ~/.kube && microk8s.kubectl config view --raw > ~/.kube/config'
-    # kubectl version --short  
-    # microk8s.config > /home/vagrant/.kube/config
-    # chown vagrant:vagrant /home/vagrant/.kube/config
-    # chmod 600 /home/vagrant/.kube/config
-    
+    # Install kubectl
+    curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/$(dpkg --print-architecture)/kubectl"
+    install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+    rm kubectl
+    echo "alias kc='/usr/local/bin/kubectl'" >> /home/vagrant/.bash_aliases
+    chown vagrant:vagrant /home/vagrant/.bash_aliases
+    # Install helm
+    curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+  SHELL
+  
+  ############################################################
+  # Create a Kubernetes Cluster wiith K3D
+  ############################################################
+  config.vm.provision "shell", inline: <<-SHELL
+    # Install K3d
+    curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
+    # echo "127.0.0.1 k3d-registry.localhost" >> /etc/hosts
+    # sudo -H -u vagrant sh -c "k3d registry create registry.localhost --port 50000"
+    # sudo -H -u vagrant sh -c "k3d cluster create devops --registry-use k3d-registry.localhost:50000 --agents 1 --port '8080:80@loadbalancer'"
   SHELL
 
-  # ######################################################################
-  # # Setup an IBM Cloud and Kubernetes environment
-  # ######################################################################
-  # config.vm.provision "shell", inline: <<-SHELL
-  #   echo "\n************************************"
-  #   echo " Installing IBM Cloud CLI..."
-  #   echo "************************************\n"
-  #   # Install IBM Cloud CLI as Vagrant user
-  #   sudo -H -u vagrant sh -c 'curl -sL https://ibm.biz/idt-installer | bash'
-  #   sudo -H -u vagrant sh -c 'ibmcloud config --usage-stats-collect false'
-  #   sudo -H -u vagrant sh -c "echo 'source <(kubectl completion bash)' >> ~/.bashrc"
-  #   sudo -H -u vagrant sh -c "echo alias ic=/usr/local/bin/ibmcloud >> ~/.bash_aliases"
-  #   # Install OpenShift Client (optional)
-  #   # mkdir ./openshift-client
-  #   # cd openshift-client
-  #   # wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
-  #   # tar xzf openshift-client-linux.tar.gz
-  #   # cp kubectl /usr/local/bin
-  #   # cp oc /usr/local/bin
-  #   # cd ..
-  #   # rmdir -fr ./openshift-client
-  #   #
-  #   # Install the IBM Cloud Native Toolkit
-  #   # curl -sL shell.cloudnativetoolkit.dev | sh - && . ~/.bashrc
-  #   echo "\n"
-  #   echo "\n************************************"
-  #   echo " For the Kubernetes Dashboard use:"
-  #   echo " kubectl proxy --address='0.0.0.0'"
-  #   echo "************************************\n"
-  #   # Prove that plug-ins are installed as vagrant user
-  #   sudo -H -u vagrant bash -c "bx plugin list"
-  # SHELL
+  ######################################################################
+  # Setup a IBM Cloud and Kubernetes environment
+  ######################################################################
+  config.vm.provision "shell", inline: <<-SHELL
+    echo "\n************************************"
+    echo " Installing IBM Cloud CLI..."
+    echo "************************************\n"
+    # Install IBM Cloud CLI as Vagrant user
+    sudo -H -u vagrant sh -c '
+    curl -fsSL https://clis.cloud.ibm.com/install/linux | sh && \
+    ibmcloud plugin install container-service && \
+    ibmcloud plugin install container-registry && \
+    echo "alias ic=ibmcloud" >> ~/.bashrc
+    '
+
+    # Show completion instructions
+    sudo -H -u vagrant sh -c "echo alias ic=/usr/local/bin/ibmcloud >> ~/.bash_aliases"
+    echo "\n************************************"
+    echo "If you have an IBM Cloud API key in ~/.bluemix/apiKey.json"
+    echo "You can login with the following command:"
+    echo "\n"
+    echo "ibmcloud login -a https://cloud.ibm.com --apikey @~/.bluemix/apikey.json -r us-south"
+    echo "ibmcloud ks cluster config --cluster <your-cluster-name>"
+    echo "\n************************************"
+  SHELL
 
 end
