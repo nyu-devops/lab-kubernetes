@@ -29,7 +29,7 @@ DATABASE_URI = os.getenv("DATABASE_URI", "redis://:@localhost:6379/0")
 app = Flask(__name__)
 
 # Import the routes After the Flask app is created
-from service import routes, models
+from service import routes, models, error_handlers
 
 # Set up logging for production
 app.logger.propagate = False
@@ -43,4 +43,4 @@ app.logger.info(70 * "*")
 app.logger.info("  H I T   C O U N T E R   S E R V I C E  ".center(70, "*"))
 app.logger.info(70 * "*")
 
-app.logger.info("Service inititalized!")
+app.logger.info("Service initialized!")
