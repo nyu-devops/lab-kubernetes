@@ -160,6 +160,7 @@ Vagrant.configure(2) do |config|
     echo "\n"
     echo "ibmcloud login -a https://cloud.ibm.com --apikey @~/.bluemix/apikey.json -r us-south"
     echo "ibmcloud ks cluster config --cluster <your-cluster-name>"
+    echo "ibmcloud cr login"
     echo "\n************************************"
   SHELL
 

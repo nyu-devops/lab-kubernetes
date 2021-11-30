@@ -16,11 +16,11 @@ spec:
         app: nginx
     spec:
       containers:
-      - image: nginx
-        name: nginx
-        ports:
-        - containerPort: 80
-          protocol: TCP
+        - image: nginx:alpine
+          name: nginx
+          ports:
+          - containerPort: 80
+            protocol: TCP
 ---
 apiVersion: v1
 kind: Service
