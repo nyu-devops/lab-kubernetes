@@ -27,13 +27,14 @@ RUN apt-get update \
 # RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 #     && apt-get -y install --no-install-recommends <your-package-list-here>
 
-# Set up the Kubernetes tools
+# Set up the Kubernetes and IBM Cloud tools
 RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/$(dpkg --print-architecture)/kubectl" \
     && install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl \
     && echo "alias kc='/usr/local/bin/kubectl'" >> /home/$USERNAME/.bash_aliases \
     && chown $USERNAME:$USERNAME /home/$USERNAME/.bash_aliases \
     && curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash \
-    && curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+    && curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash \
+    && curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
 
 # Update Python tools
 RUN pip3 install -U pip wheel setuptools
