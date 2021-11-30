@@ -34,7 +34,7 @@ RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/s
     && chown $USERNAME:$USERNAME /home/$USERNAME/.bash_aliases \
     && curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash \
     && curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash \
-    && curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
+    && if [ $(dpkg --print-architecture) = 'amd64' ]; then curl -fsSL https://clis.cloud.ibm.com/install/linux | sh; fi;    
 
 # Update Python tools
 RUN pip3 install -U pip wheel setuptools
@@ -45,6 +45,12 @@ VOLUME [ "/var/lib/docker" ]
 
 # Become a regular user
 USER $USERNAME
+
+# IBM Cloud plugins must be installed by the user
+RUN if [ $(dpkg --print-architecture) = 'amd64' ]; then \
+        ibmcloud plugin install container-service; \
+        ibmcloud plugin install container-registry; \
+    fi;    
 
 # Setting the ENTRYPOINT to docker-init.sh will start up the Docker Engine 
 # inside the container "overrideCommand": false is set in devcontainer.json. 
