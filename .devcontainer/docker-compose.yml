@@ -7,7 +7,7 @@ services:
       dockerfile: .devcontainer/Dockerfile
     hostname: devops
     container_name: app
-    # init: true
+    init: true
     # privileged: true
     # ports:
     #   - 8000:8000

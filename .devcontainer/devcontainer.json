@@ -23,9 +23,13 @@
 		"inercia.vscode-k3d",
 		"streetsidesoftware.code-spell-checker"
 	],
-    "postCreateCommand": "if test -f 'requirements.txt'; then pip install -r requirements.txt; fi",
+    "postCreateCommand": "if test -f 'requirements.txt'; then sudo pip install -r requirements.txt; fi",
 	"features": {
 		"docker-from-docker": "latest",
-		"kubectl-helm-minikube": "latest"		
+		"kubectl-helm-minikube": {
+			"version": "latest",
+			"helm": "latest",
+			"minikube": "none"
+		}
 	}
 }

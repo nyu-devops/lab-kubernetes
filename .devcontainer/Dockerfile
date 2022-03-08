@@ -14,11 +14,16 @@ ARG USER_GID=$USER_UID
 
 # Create the user with passwordless sudo privileges
 RUN groupadd --gid $USER_GID $USERNAME \
-    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME -s /usr/bin/bash \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME -s /bin/bash \
     && usermod -aG sudo $USERNAME \
     && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME \
-    && echo "alias kc='/usr/local/bin/kubectl'" >> /home/$USERNAME/.bash_aliases
+    && echo "alias kc='/usr/local/bin/kubectl'" >> /home/$USERNAME/.bash_aliases \
+    && echo "alias mk='/usr/local/bin/minikube'" >> /home/$USERNAME/.bash_aliases \
+    && chown -R $USERNAME:$USERNAME /home/$USERNAME
+
+# Install K3D for Kubernetes alternative
+RUN curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
 
 # Set up the Python development environment
 WORKDIR /app
