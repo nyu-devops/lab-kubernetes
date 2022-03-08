@@ -6,16 +6,13 @@ services:
       context: ..
       dockerfile: .devcontainer/Dockerfile
     hostname: devops
-    init: true 
-    privileged: true
+    container_name: app
+    init: true
+    # privileged: true
     # ports:
-    #   - 8080:8080
+    #   - 8000:8000
     volumes:
       - ..:/app
-      - ~/.gitconfig:/home/vscode/.gitconfig
-      - ~/.ssh/:/home/vscode/.ssh/
-      - ~/.bluemix/:/home/vscode/.bluemix/
-      - dind-var-lib-docker:/var/lib/docker
     command: sleep infinity
     environment:
       FLASK_APP: service:app
@@ -29,6 +26,7 @@ services:
   redis:
     image: redis:6-alpine
     hostname: redis
+    container_name: redis
     ports:
       - "6379:6379"
     volumes:
@@ -38,7 +36,6 @@ services:
 
 volumes:
   redis:
-  dind-var-lib-docker:
-
+    
 networks:
-  dev:
+  dev: null
