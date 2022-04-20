@@ -25,7 +25,8 @@
 	],
     "postCreateCommand": "if test -f 'requirements.txt'; then sudo pip install -r requirements.txt; fi",
 	"features": {
-		"docker-from-docker": "latest",
+		// "docker-from-docker": "latest",
+		"docker-in-docker": "latest",
 		"kubectl-helm-minikube": {
 			"version": "latest",
 			"helm": "latest",
