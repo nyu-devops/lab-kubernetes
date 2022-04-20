@@ -5,8 +5,8 @@ services:
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile
-    hostname: devops
-    container_name: app
+    hostname: nyu
+    container_name: lab-kubernetes
     init: true
     # privileged: true
     # ports:
