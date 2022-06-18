@@ -20,6 +20,7 @@ RUN groupadd --gid $USER_GID $USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME \
     && echo "alias kc='/usr/local/bin/kubectl'" >> /home/$USERNAME/.bash_aliases \
     && echo "alias kn='kubectl config set-context --current --namespace'" >> /home/$USERNAME/.bash_aliases \
+    && echo "source /usr/local/ibmcloud/autocomplete/bash_autocomplete" >> /home/$USERNAME/.bashrc \
     && chown -R $USERNAME:$USERNAME /home/$USERNAME
 
 # Install K3D for Kubernetes alternative
