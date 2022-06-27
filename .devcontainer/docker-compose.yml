@@ -9,8 +9,8 @@ services:
     container_name: lab-kubernetes
     init: true
     # privileged: true
-    ports:
-      - 8080:8080
+    # ports:
+    #   - 8080:8080
     volumes:
       - ..:/app
     command: sleep infinity
@@ -28,7 +28,7 @@ services:
     hostname: redis
     container_name: redis
     ports:
-      - "6379:6379"
+      - 6379
     volumes:
       - redis:/data
     networks:
