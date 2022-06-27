@@ -16,6 +16,10 @@ fi;
 echo "Creating alias 'ic' for ibmcloud command"
 echo "alias ic='/usr/local/bin/ibmcloud'" >> ~/.bash_aliases
 
-echo "Installing Kubernetes Plugin..."
-ibmcloud plugin install container-service
+echo "Installing Kubernetes Service Plugin..."
+ibmcloud plugin install container-service -r 'IBM Cloud'
+
+echo "Installing Container Registry Plugin..."
+ibmcloud plugin install container-registry -r 'IBM Cloud'
+
 echo "IBM Cloud CLI installation complete."
