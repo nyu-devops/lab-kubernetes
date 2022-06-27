@@ -3,10 +3,8 @@ kind: Service
 metadata:
   name: hitcounter
 spec:
-  type: NodePort
-  selector:
-    app: hitcounter
   ports:
-    - name: primary
+    - name: http
       protocol: TCP
       port: 8080
+      nodePort: 31001
