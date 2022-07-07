@@ -7,6 +7,10 @@ RUN apt-get update && \
     apt-get autoremove -y && \
     apt-get clean -y
 
+# Install K3D and Kustomize for Kubernetes alternative to minikube
+RUN curl -s "https://raw.githubusercontent.com/rancher/k3d/main/install.sh" | bash && \
+    curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+
 # Create a user for development
 ARG USERNAME=vscode
 ARG USER_UID=1000
@@ -19,12 +23,10 @@ RUN groupadd --gid $USER_GID $USERNAME \
     && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME \
     && echo "alias kc='/usr/local/bin/kubectl'" >> /home/$USERNAME/.bash_aliases \
-    && echo "alias kn='kubectl config set-context --current --namespace'" >> /home/$USERNAME/.bash_aliases \
+    && echo "alias ku='/usr/local/bin/kustomize'" >> /home/$USERNAME/.bash_aliases \
+    && echo "alias kns='kubectl config set-context --current --namespace'" >> /home/$USERNAME/.bash_aliases \
     && echo "source /usr/local/ibmcloud/autocomplete/bash_autocomplete" >> /home/$USERNAME/.bashrc \
     && chown -R $USERNAME:$USERNAME /home/$USERNAME
-
-# Install K3D for Kubernetes alternative
-RUN curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
 
 # Set up the Python development environment
 WORKDIR /app
