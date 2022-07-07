@@ -27,10 +27,10 @@ spec:
             mountPath: /data
           resources:
             limits:
-              cpu: "0.5"
+              cpu: "0.25"
               memory: "64Mi"
             requests:
-              cpu: "0.25"        
+              cpu: "0.10"        
               memory: "32Mi"
       volumes:
       - name: redis-storage

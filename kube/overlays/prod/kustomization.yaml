@@ -17,5 +17,6 @@ patches:
   - node-port.yaml
 
 images:
-  - name: de.icr.io/nyu-devops/hitcounter
-    newTag: 1.0.1
+  - name: hitcounter
+    newName: us.icr.io/nyu_devops/lab-kubernetes
+    newTag: "2.1"

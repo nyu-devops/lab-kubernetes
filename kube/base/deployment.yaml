@@ -17,8 +17,7 @@ spec:
       restartPolicy: Always
       containers:
       - name: hitcounter
-        image: cluster-registry:32000/hitcounter:1.0
-        # image: de.icr.io/nyu-devops/lab-kubernetes:1
+        image: hitcounter
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080

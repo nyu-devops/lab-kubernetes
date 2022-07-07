@@ -7,20 +7,19 @@ kind: Kustomization
 bases:
 - ../../base
 
-namespace: dev
+namespace: default
 
-# namePrefix: dev-
 commonLabels:
-  env: dev
+  env: default
 
 resources:
-  - namespace.yaml
+  - ingress.yaml
+
 
 patches:
-  - replica-count.yaml
   - node-port.yaml
 
 images:
   - name: hitcounter
-    newName: us.icr.io/nyu_devops/lab-kubernetes
-    newTag: "2.1"
+    newName: cluster-registry:32000/hitcounter
+    newTag: "1.0"
