@@ -24,38 +24,39 @@ import os
 import logging
 from unittest import TestCase
 from unittest.mock import patch
-from service import app, DATABASE_URI
+from service import app
 from service.models import Counter, DatabaseConnectionError
 
 DATABASE_URI = os.getenv("DATABASE_URI", "redis://:@localhost:6379/0")
 
 # logging.disable(logging.CRITICAL)
 
+
 ######################################################################
 #  T E S T   C A S E S
 ######################################################################
 class ServiceTest(TestCase):
-    """ REST API Server Tests """
+    """REST API Server Tests"""
 
     @classmethod
     def setUpClass(cls):
-        """ This runs once before the entire test suite """
+        """This runs once before the entire test suite"""
         app.testing = True
         app.debug = False
 
     @classmethod
     def tearDownClass(cls):
-        """ This runs once after the entire test suite """
+        """This runs once after the entire test suite"""
         pass
 
     def setUp(self):
-        """ This runs before each test """
+        """This runs before each test"""
         Counter.connect(DATABASE_URI)
         Counter.remove_all()
         self.app = app.test_client()
 
     def tearDown(self):
-        """ This runs after each test """
+        """This runs after each test"""
         pass
 
     ######################################################################
@@ -63,33 +64,33 @@ class ServiceTest(TestCase):
     ######################################################################
 
     def test_index(self):
-        """ Get the home page """
+        """Get the home page"""
         resp = self.app.get("/")
         self.assertEquals(resp.status_code, 200)
 
     def test_health(self):
-        """ Get the health endpoint """
+        """Get the health endpoint"""
         resp = self.app.get("/health")
         self.assertEquals(resp.status_code, 200)
         data = resp.get_json()
         self.assertEqual(data["status"], "OK")
 
     def test_create_counter(self):
-        """ Create a counter """
+        """Create a counter"""
         resp = self.app.post("/counters/foo")
         self.assertEquals(resp.status_code, 201)
         data = resp.get_json()
         self.assertEqual(data["counter"], 0)
 
     def test_counter_already_exists(self):
-        """ Counter already exists """
+        """Counter already exists"""
         resp = self.app.post("/counters/foo")
         self.assertEquals(resp.status_code, 201)
         resp = self.app.post("/counters/foo")
         self.assertEquals(resp.status_code, 409)
 
     def test_list_counters(self):
-        """ Get the counter """
+        """Get the counter"""
         resp = self.app.post("/counters/foo")
         self.assertEquals(resp.status_code, 201)
         resp = self.app.post("/counters/bar")
@@ -100,7 +101,7 @@ class ServiceTest(TestCase):
         self.assertEqual(len(data), 2)
 
     def test_get_counter(self):
-        """ Get the counter """
+        """Get the counter"""
         self.test_create_counter()
         resp = self.app.get("/counters/foo")
         self.assertEquals(resp.status_code, 200)
@@ -108,17 +109,17 @@ class ServiceTest(TestCase):
         self.assertEqual(data["counter"], 0)
 
     def test_get_counter_not_found(self):
-        """ Test counter not found """
+        """Test counter not found"""
         resp = self.app.get("/counters/foo")
         self.assertEquals(resp.status_code, 404)
 
     def test_put_counter_not_found(self):
-        """ Test counter not found """
+        """Test counter not found"""
         resp = self.app.put("/counters/foo")
         self.assertEquals(resp.status_code, 404)
 
     def test_increment_counter(self):
-        """ Increment the counter """
+        """Increment the counter"""
         self.test_get_counter()
         resp = self.app.put("/counters/foo")
         self.assertEquals(resp.status_code, 200)
@@ -132,16 +133,15 @@ class ServiceTest(TestCase):
         self.assertEqual(data["counter"], 2)
 
     def test_delete_counter(self):
-        """ Delete the counter """
+        """Delete the counter"""
         self.test_create_counter()
         resp = self.app.delete("/counters/foo")
         self.assertEquals(resp.status_code, 204)
 
     def test_method_not_allowed(self):
-        """ Test Method Not Allowed """
+        """Test Method Not Allowed"""
         resp = self.app.post("/counters")
         self.assertEquals(resp.status_code, 405)
-
 
     ######################################################################
     #  T E S T   E R R O R   H A N D L E R S
@@ -149,15 +149,15 @@ class ServiceTest(TestCase):
 
     @patch("service.routes.Counter.redis.get")
     def test_failed_get_request(self, redis_mock):
-        """ Error handlers for failed GET """
+        """Error handlers for failed GET"""
         redis_mock.return_value = 0
         redis_mock.side_effect = DatabaseConnectionError()
         resp = self.app.get("/counters/foo")
         self.assertEqual(resp.status_code, 503)
-    
+
     @patch("service.models.Counter.increment")
     def test_failed_update_request(self, value_mock):
-        """ Error handlers for failed UPDATE """
+        """Error handlers for failed UPDATE"""
         value_mock.return_value = 0
         value_mock.side_effect = DatabaseConnectionError()
         self.test_create_counter()
@@ -166,7 +166,7 @@ class ServiceTest(TestCase):
 
     @patch("service.models.Counter.__init__")
     def test_failed_post_request(self, value_mock):
-        """ Error handlers for failed POST """
+        """Error handlers for failed POST"""
         value_mock.return_value = 0
         value_mock.side_effect = DatabaseConnectionError()
         resp = self.app.post("/counters/foo")
@@ -174,14 +174,14 @@ class ServiceTest(TestCase):
 
     @patch("service.routes.Counter.redis.keys")
     def test_failed_list_request(self, redis_mock):
-        """ Error handlers for failed LIST """
+        """Error handlers for failed LIST"""
         redis_mock.return_value = 0
         redis_mock.side_effect = Exception()
         resp = self.app.get("/counters")
         self.assertEqual(resp.status_code, 503)
 
     def test_failed_delete_request(self):
-        """ Error handlers for failed DELETE """
+        """Error handlers for failed DELETE"""
         self.test_create_counter()
         with patch("service.routes.Counter.redis.get") as redis_mock:
             redis_mock.return_value = 0
