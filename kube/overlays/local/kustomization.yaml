@@ -10,14 +10,13 @@ bases:
 namespace: default
 
 commonLabels:
-  env: default
+  env: local
 
 resources:
   - ingress.yaml
 
-
 patches:
-  - node-port.yaml
+  - patch-svc.yaml
 
 images:
   - name: hitcounter
