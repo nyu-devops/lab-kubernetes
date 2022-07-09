@@ -4,3 +4,7 @@ metadata:
   name: hitcounter
 spec:
   replicas: 2
+  template:
+    spec:
+      imagePullSecrets:
+      - name: all-icr-io

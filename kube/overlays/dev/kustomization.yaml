@@ -1,6 +1,3 @@
-# To update the build number at deployment time use:
-#   export BUILD_NUMBER="v1.x.x"
-#   yq eval -i ".images[0].newTag = $BUILD_NUMBER" overlays/dev/kustomization.yaml
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
@@ -8,19 +5,17 @@ bases:
 - ../../base
 
 namespace: dev
-
-# namePrefix: dev-
 commonLabels:
   env: dev
 
-resources:
-  - namespace.yaml
+# resources:
+#   - namespace.yaml
 
 patches:
-  - replica-count.yaml
-  - node-port.yaml
+  - patch-deploy.yaml
+  - patch-svc.yaml
 
 images:
   - name: hitcounter
     newName: us.icr.io/nyu_devops/lab-kubernetes
-    newTag: "2.1"
+    newTag: "21"

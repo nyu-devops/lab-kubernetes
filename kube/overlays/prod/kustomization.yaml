@@ -4,19 +4,17 @@ bases:
 - ../../base
 
 namespace: prod
-
-# namePrefix: prod-
 commonLabels:
   env: prod
 
-resources:
-  - namespace.yaml
+# resources:
+#   - namespace.yaml
 
 patches:
-  - replica-count.yaml
-  - node-port.yaml
+  - patch-deploy.yaml
+  - patch-svc.yaml
 
 images:
   - name: hitcounter
     newName: us.icr.io/nyu_devops/lab-kubernetes
-    newTag: "2.1"
+    newTag: "21"
