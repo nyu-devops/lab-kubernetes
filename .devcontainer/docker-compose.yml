@@ -8,11 +8,9 @@ services:
     hostname: nyu
     container_name: lab-kubernetes
     init: true
-    # privileged: true
-    # ports:
-    #   - 8080:8080
     volumes:
       - ..:/app
+      - ~/.bluemix/apikey.json:/home/vscode/apikey.json
     command: sleep infinity
     environment:
       FLASK_APP: service:app
