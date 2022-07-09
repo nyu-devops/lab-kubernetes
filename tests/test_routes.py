@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2016, 2020 John J. Rofrano. All Rights Reserved.
+# Copyright 2016, 2022 John J. Rofrano. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ class ServiceTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         """This runs once after the entire test suite"""
-        pass
 
     def setUp(self):
         """This runs before each test"""
@@ -57,7 +56,6 @@ class ServiceTest(TestCase):
 
     def tearDown(self):
         """This runs after each test"""
-        pass
 
     ######################################################################
     #  T E S T   C A S E S
@@ -66,37 +64,37 @@ class ServiceTest(TestCase):
     def test_index(self):
         """Get the home page"""
         resp = self.app.get("/")
-        self.assertEquals(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 200)
 
     def test_health(self):
         """Get the health endpoint"""
         resp = self.app.get("/health")
-        self.assertEquals(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 200)
         data = resp.get_json()
         self.assertEqual(data["status"], "OK")
 
     def test_create_counter(self):
         """Create a counter"""
         resp = self.app.post("/counters/foo")
-        self.assertEquals(resp.status_code, 201)
+        self.assertEqual(resp.status_code, 201)
         data = resp.get_json()
         self.assertEqual(data["counter"], 0)
 
     def test_counter_already_exists(self):
         """Counter already exists"""
         resp = self.app.post("/counters/foo")
-        self.assertEquals(resp.status_code, 201)
+        self.assertEqual(resp.status_code, 201)
         resp = self.app.post("/counters/foo")
-        self.assertEquals(resp.status_code, 409)
+        self.assertEqual(resp.status_code, 409)
 
     def test_list_counters(self):
         """Get the counter"""
         resp = self.app.post("/counters/foo")
-        self.assertEquals(resp.status_code, 201)
+        self.assertEqual(resp.status_code, 201)
         resp = self.app.post("/counters/bar")
-        self.assertEquals(resp.status_code, 201)
+        self.assertEqual(resp.status_code, 201)
         resp = self.app.get("/counters")
-        self.assertEquals(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 200)
         data = resp.get_json()
         self.assertEqual(len(data), 2)
 
@@ -104,30 +102,30 @@ class ServiceTest(TestCase):
         """Get the counter"""
         self.test_create_counter()
         resp = self.app.get("/counters/foo")
-        self.assertEquals(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 200)
         data = resp.get_json()
         self.assertEqual(data["counter"], 0)
 
     def test_get_counter_not_found(self):
         """Test counter not found"""
         resp = self.app.get("/counters/foo")
-        self.assertEquals(resp.status_code, 404)
+        self.assertEqual(resp.status_code, 404)
 
     def test_put_counter_not_found(self):
         """Test counter not found"""
         resp = self.app.put("/counters/foo")
-        self.assertEquals(resp.status_code, 404)
+        self.assertEqual(resp.status_code, 404)
 
     def test_increment_counter(self):
         """Increment the counter"""
         self.test_get_counter()
         resp = self.app.put("/counters/foo")
-        self.assertEquals(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 200)
         data = resp.get_json()
         self.assertEqual(data["counter"], 1)
 
         resp = self.app.put("/counters/foo")
-        self.assertEquals(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 200)
         data = resp.get_json()
         logging.debug(data)
         self.assertEqual(data["counter"], 2)
@@ -136,12 +134,12 @@ class ServiceTest(TestCase):
         """Delete the counter"""
         self.test_create_counter()
         resp = self.app.delete("/counters/foo")
-        self.assertEquals(resp.status_code, 204)
+        self.assertEqual(resp.status_code, 204)
 
     def test_method_not_allowed(self):
         """Test Method Not Allowed"""
         resp = self.app.post("/counters")
-        self.assertEquals(resp.status_code, 405)
+        self.assertEqual(resp.status_code, 405)
 
     ######################################################################
     #  T E S T   E R R O R   H A N D L E R S

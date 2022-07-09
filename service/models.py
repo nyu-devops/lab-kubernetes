@@ -1,5 +1,5 @@
 ######################################################################
-# Copyright 2016, 2020 John Rofrano. All Rights Reserved.
+# Copyright 2016, 2022 John Rofrano. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -19,18 +19,18 @@ Counter Model
 import os
 import logging
 from redis import Redis
-from redis.exceptions import ConnectionError
+from redis.exceptions import ConnectionError as RedisConnectionError
 
 logger = logging.getLogger(__name__)
 
 DATABASE_URI = os.getenv("DATABASE_URI", "redis://localhost:6379")
 
 
-class DatabaseConnectionError(ConnectionError):
-    pass
+class DatabaseConnectionError(RedisConnectionError):
+    """Indicates that a database connection error has occurred"""
 
 
-class Counter(object):
+class Counter():
     """An integer counter that is persisted in Redis
 
     You can establish a connection to Redis using an environment
@@ -71,6 +71,7 @@ class Counter(object):
         return Counter.redis.incr(self.name)
 
     def serialize(self):
+        """Creates a Python dictionary from the instance"""
         return dict(name=self.name, counter=int(Counter.redis.get(self.name)))
 
     ######################################################################
@@ -86,7 +87,7 @@ class Counter(object):
                 for key in cls.redis.keys("*")
             ]
         except Exception as err:
-            raise DatabaseConnectionError(err)
+            raise DatabaseConnectionError(err) from err
         return counters
 
     @classmethod
@@ -98,15 +99,16 @@ class Counter(object):
             if count:
                 counter = Counter(name, count)
         except Exception as err:
-            raise DatabaseConnectionError(err)
+            raise DatabaseConnectionError(err) from err
         return counter
 
     @classmethod
     def remove_all(cls):
+        """Deletes all of the counters"""
         try:
             cls.redis.flushall()
         except Exception as err:
-            raise DatabaseConnectionError(err)
+            raise DatabaseConnectionError(err) from err
 
     ######################################################################
     #  R E D I S   D A T A B A S E   C O N N E C T I O N   M E T H O D S
@@ -120,7 +122,7 @@ class Counter(object):
             cls.redis.ping()
             logger.info("Connection established")
             success = True
-        except ConnectionError:
+        except RedisConnectionError:
             logger.warning("Connection Error!")
         return success
 

@@ -1,4 +1,4 @@
-# Copyright 2016, 2020 John J. Rofrano. All Rights Reserved.
+# Copyright 2016, 2022 John J. Rofrano. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ Package for the application models and service routes
 import os
 import logging
 from flask import Flask
+from service.utils import log_handlers
 
 # NOTE: Do not change the order of this code
 # The Flask app must be created
@@ -28,16 +29,13 @@ DATABASE_URI = os.getenv("DATABASE_URI", "redis://:@localhost:6379/0")
 # Create the Flask aoo
 app = Flask(__name__)
 
-# Import the routes After the Flask app is created
-from service import routes, models, error_handlers
+# Dependencies require we import the routes AFTER the Flask app is created
+# pylint: disable=wrong-import-position, wrong-import-order, cyclic-import
+from service import routes
+from service.utils import error_handlers  # noqa: F401, E402
 
 # Set up logging for production
-app.logger.propagate = False
-if __name__ != "__main__":
-    gunicorn_logger = logging.getLogger("gunicorn.error")
-    if gunicorn_logger:
-        app.logger.handlers = gunicorn_logger.handlers
-        app.logger.setLevel(gunicorn_logger.level)
+log_handlers.init_logging(app, "gunicorn.error")
 
 app.logger.info(70 * "*")
 app.logger.info("  H I T   C O U N T E R   S E R V I C E  ".center(70, "*"))

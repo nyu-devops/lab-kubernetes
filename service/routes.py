@@ -1,4 +1,4 @@
-# Copyright 2015, 2021 John J. Rofrano All Rights Reserved.
+# Copyright 2015, 2022 John J. Rofrano All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,14 +14,10 @@
 """
 Redis Counter Demo in Docker
 """
-import os
 from flask import jsonify, abort, url_for
-from . import app, status  # HTTP Status Codes
-from service import DATABASE_URI
-from .models import Counter, DatabaseConnectionError
-
-DEBUG = os.getenv("DEBUG", "False") == "True"
-PORT = os.getenv("PORT", "8080")
+from service import app, DATABASE_URI
+from service.utils import status  # HTTP Status Codes
+from service.models import Counter, DatabaseConnectionError
 
 
 ############################################################
@@ -47,6 +43,7 @@ def index():
 ############################################################
 @app.route("/counters", methods=["GET"])
 def list_counters():
+    """Lists all counters in the database"""
     app.logger.info("Request to list all counters...")
     try:
         counters = Counter.all()
@@ -61,7 +58,8 @@ def list_counters():
 ############################################################
 @app.route("/counters/<name>", methods=["GET"])
 def read_counters(name):
-    app.logger.info("Request to Read counter: {}...".format(name))
+    """Reads a counter from the database"""
+    app.logger.info("Request to Read counter: %s...", name)
 
     try:
         counter = Counter.find(name)
@@ -69,9 +67,9 @@ def read_counters(name):
         abort(status.HTTP_503_SERVICE_UNAVAILABLE, err)
 
     if not counter:
-        abort(status.HTTP_404_NOT_FOUND, "Counter {} does not exist".format(name))
+        abort(status.HTTP_404_NOT_FOUND, f"Counter [{name}] does not exist")
 
-    app.logger.info("Returning: {}...".format(counter.value))
+    app.logger.info("Returning: %d...", counter.value)
     return jsonify(counter.serialize())
 
 
@@ -80,11 +78,12 @@ def read_counters(name):
 ############################################################
 @app.route("/counters/<name>", methods=["POST"])
 def create_counters(name):
+    """Creates a counter in the database"""
     app.logger.info("Request to Create counter...")
     try:
         counter = Counter.find(name)
         if counter is not None:
-            return jsonify(code=409, error="Counter already exists"), 409
+            return jsonify(code=409, error=f"Counter [{name}] already exists"), 409
 
         counter = Counter(name)
     except DatabaseConnectionError as err:
@@ -103,12 +102,13 @@ def create_counters(name):
 ############################################################
 @app.route("/counters/<name>", methods=["PUT"])
 def update_counters(name):
+    """Updates a counter in the database"""
     app.logger.info("Request to Update counter...")
     try:
         counter = Counter.find(name)
         if counter is None:
             return (
-                jsonify(code=404, error="Counter {} does not exist".format(name)),
+                jsonify(code=404, error=f"Counter [{name}] does not exist"),
                 404,
             )
 
@@ -124,6 +124,7 @@ def update_counters(name):
 ############################################################
 @app.route("/counters/<name>", methods=["DELETE"])
 def delete_counters(name):
+    """Removes te counter from teh database"""
     app.logger.info("Request to Delete counter...")
     try:
         counter = Counter.find(name)
@@ -142,6 +143,7 @@ def delete_counters(name):
 
 @app.before_first_request
 def init_db():
+    """Initialize the Redis database"""
     try:
         app.logger.info("Initializing the Redis database")
         Counter.connect(DATABASE_URI)
