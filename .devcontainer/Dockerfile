@@ -7,9 +7,11 @@ RUN apt-get update && \
     apt-get autoremove -y && \
     apt-get clean -y
 
-# Install K3D and Kustomize for Kubernetes alternative to minikube
+# Install K3D, Kustomize, & IBM Cloud CLI for Kubernetes
 RUN curl -s "https://raw.githubusercontent.com/rancher/k3d/main/install.sh" | bash && \
-    curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+    curl -fsSL https://clis.cloud.ibm.com/install/linux | sh && \
+    curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash && \
+    install kustomize /usr/bin/kustomize
 
 # Create a user for development
 ARG USERNAME=vscode
@@ -28,6 +30,9 @@ RUN groupadd --gid $USER_GID $USERNAME \
     && echo "source /usr/local/ibmcloud/autocomplete/bash_autocomplete" >> /home/$USERNAME/.bashrc \
     && chown -R $USERNAME:$USERNAME /home/$USERNAME
 
+# Added libraries for PostgreSQL before pip install
+RUN apt-get install -y gcc libpq-dev
+
 # Set up the Python development environment
 WORKDIR /app
 RUN python -m pip install --upgrade pip && \
@@ -38,3 +43,7 @@ ENV TERM=xterm-256color
 
 # Become a regular user for development
 USER $USERNAME
+
+# Install user mode tools
+RUN ibmcloud plugin install container-service -r 'IBM Cloud' && \
+    ibmcloud plugin install container-registry -r 'IBM Cloud'

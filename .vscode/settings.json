@@ -1,4 +1,5 @@
 {
+    "markdown.extension.print.theme": "light",
     "makefile.extensionOutputFolder": "./.vscode",
     "python.pythonPath": "/usr/local/bin/python",
     "python.linting.enabled": true,
