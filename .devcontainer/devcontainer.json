@@ -10,6 +10,7 @@
 		"ms-python.python",
 		"ms-python.pylint",
 		"ms-python.vscode-pylance",
+		"alexkrechik.cucumberautocomplete",
 		"ms-azuretools.vscode-docker",
 		"njpwerner.autodocstring",
     	"wholroyd.jinja",
@@ -20,11 +21,13 @@
 		"donjayamanne.githistory",
 		"GitHub.vscode-pull-request-github",
 		"hbenl.vscode-test-explorer",
+		"LittleFoxTeam.vscode-python-test-adapter",
 		"redhat.vscode-yaml",
 		"inercia.vscode-k3d",
+		"bbenoist.vagrant",
 		"streetsidesoftware.code-spell-checker"
 	],
-    "postCreateCommand": "sudo pip install -r requirements.txt; bash /app/scripts/install-tools.sh",
+    "postCreateCommand": "sudo pip install -r requirements.txt",
 	"features": {
 		"docker-in-docker": "latest",
 		"kubectl-helm-minikube": {

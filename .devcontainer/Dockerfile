@@ -7,10 +7,6 @@ RUN apt-get update && \
     apt-get autoremove -y && \
     apt-get clean -y
 
-# Install K3D and Kustomize for Kubernetes alternative to minikube
-RUN curl -s "https://raw.githubusercontent.com/rancher/k3d/main/install.sh" | bash && \
-    curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
-
 # Create a user for development
 ARG USERNAME=vscode
 ARG USER_UID=1000
@@ -22,19 +18,25 @@ RUN groupadd --gid $USER_GID $USERNAME \
     && usermod -aG sudo $USERNAME \
     && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME \
-    && echo "alias kc='/usr/local/bin/kubectl'" >> /home/$USERNAME/.bash_aliases \
-    && echo "alias ku='/usr/local/bin/kustomize'" >> /home/$USERNAME/.bash_aliases \
-    && echo "alias kns='kubectl config set-context --current --namespace'" >> /home/$USERNAME/.bash_aliases \
-    && echo "source /usr/local/ibmcloud/autocomplete/bash_autocomplete" >> /home/$USERNAME/.bashrc \
     && chown -R $USERNAME:$USERNAME /home/$USERNAME
+
+# Added libraries for PostgreSQL before pip install
+RUN apt-get install -y gcc libpq-dev
 
 # Set up the Python development environment
 WORKDIR /app
 RUN python -m pip install --upgrade pip && \
     pip install --upgrade wheel
 
+ENV PORT 8080
+EXPOSE $PORT
+
 # Enable color terminal for docker exec bash
 ENV TERM=xterm-256color
 
 # Become a regular user for development
 USER $USERNAME
+
+# Install user mode tools
+COPY .devcontainer/scripts/install-tools.sh /tmp/
+RUN cd /tmp && bash ./install-tools.sh
