@@ -56,10 +56,17 @@ cluster_rm: ## Remove a K3D Kubernetes cluster
 	$(info Removing Kubernetes cluster...)
 	k3d cluster delete
 
+tekton: ## Install Tekton
+	$(info Installing Tekton in the Cluster...)
+	kubectl apply --filename https://storage.googleapis.com/tekton-releases/pipeline/latest/release.yaml
+	kubectl apply --filename https://storage.googleapis.com/tekton-releases/triggers/latest/release.yaml
+	kubectl apply --filename https://storage.googleapis.com/tekton-releases/triggers/latest/interceptors.yaml
+	kubectl apply --filename https://storage.googleapis.com/tekton-releases/dashboard/latest/tekton-dashboard-release.yaml
+
 .PHONY: deploy
 depoy: ## Deploy the service on local Kubernetes
 	$(info Deploying service locally...)
-	kubectl apply -k kube/overlay/local
+	kubectl apply -k kustomize/overlay/local
 
 ############################################################
 # COMMANDS FOR BUILDING THE IMAGE
@@ -75,7 +82,12 @@ init:	## Creates the buildx instance
 .PHONY: build
 build:	## Build all of the project Docker images
 	$(info Building $(IMAGE) for $(PLATFORM)...)
-	docker buildx build --file Dockerfile  --pull --platform=$(PLATFORM) --tag $(IMAGE) --push .
+	docker build --pull --tag $(IMAGE) .
+
+.PHONY: buildx
+buildx:	## Build multi-platform image with buildx
+	$(info Building multi-platform image $(IMAGE) for $(PLATFORM)...)
+	docker buildx build --file Dockerfile  --pull --platform=$(PLATFORM) --tag $(IMAGE) --load .
 
 .PHONY: remove
 remove:	## Stop and remove the buildx builder
