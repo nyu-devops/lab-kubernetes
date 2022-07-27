@@ -20,9 +20,6 @@ RUN groupadd --gid $USER_GID $USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME \
     && chown -R $USERNAME:$USERNAME /home/$USERNAME
 
-# Added libraries for PostgreSQL before pip install
-RUN apt-get install -y gcc libpq-dev
-
 # Set up the Python development environment
 WORKDIR /app
 RUN python -m pip install --upgrade pip && \
