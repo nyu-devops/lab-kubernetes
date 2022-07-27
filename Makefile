@@ -63,6 +63,16 @@ run: ## Run the service
 	$(info Starting service...)
 	honcho start
 
+.PHONY: cluster
+cluster: ## Create a K3D Kubernetes cluster with load balancer and registry
+	$(info Creating Kubernetes cluster with a registry...)
+	k3d cluster create --registry-create cluster-registry:0.0.0.0:32000 --port '8080:80@loadbalancer'
+
+.PHONY: cluster_rm
+cluster_rm: ## Remove a K3D Kubernetes cluster
+	$(info Removing Kubernetes cluster...)
+	k3d cluster delete
+
 .PHONY: deploy
 depoy: ## Deploy the service on local Kubernetes
 	$(info Deploying service locally...)
