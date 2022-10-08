@@ -5,7 +5,12 @@ metadata:
   labels:
     app: hitcounter
 spec:
-  replicas: 2
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 2
+      maxUnavailable: 0  
   selector:
     matchLabels:
       app: hitcounter
@@ -29,15 +34,15 @@ spec:
                 name: redis-creds
                 key: uri
         readinessProbe:
-          initialDelaySeconds: 5
-          periodSeconds: 30
           httpGet:
             path: /health
             port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 30
         resources:
           limits:
-            cpu: "0.25"
+            cpu: "0.250m"
             memory: "64Mi"
           requests:
-            cpu: "0.1"        
+            cpu: "0.100m"        
             memory: "32Mi"

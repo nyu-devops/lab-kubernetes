@@ -6,6 +6,44 @@ What is Docker? How can Docker containers help you build and deploy a cloud nati
 
 This lab is an example of how to create a Python / Flask / Redis app using Docker on IBM Cloud
 
+### Copy your apikey to /home/vscode
+
+```
+docker cp ~/.bluemix/apikey.json lab-kubernetes:/home/vscode
+docker exec lab-kubernetes sudo chown vscode:vscode /home/vscode/apikey.json
+```
+
+### IBM Cloud Login
+
+```
+ibmcloud login -a cloud.ibm.com -r us-south -g default --apikey @~/apikey.json
+ibmcloud ks cluster config --cluster nyu-devops
+ibmcloud cr login
+```
+
+### Update Image name
+
+```
+(kustomize edit set image hitcounter=us.icr.io/nyu_devops/lab-kubernetes && kustomize build .)
+```
+
+```
+kustomize build kube/overlays/dev | kc apply -f -  
+```
+
+### Create a dev namespace
+
+When you create a new namespace you must copy the `ImagePullSecret` from the `default` namespace so that deployments in the new namespace can pull images from the IBM Cloud Container Registry.
+
+The command to do this for `dev` is:
+
+```bash
+kunectl create namespace dev
+kubectl -n default get secret all-icr-io -o yaml | sed 's/namespace: default/namespace: dev/g' | kubectl -n dev apply -f -
+```
+
+What the second command does is to get the `ImagePullSecret` named `all-icr-io` from the `default` namespace and running it through `sed` to change the `namespace:` to whatever is needed, and applying it to the `dev` namespace.
+
 ## Setting up your Development Environment
 
 There are three ways to use this lab:
