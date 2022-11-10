@@ -4,6 +4,7 @@ IMAGE_NAME ?= hitcounter
 IMAGE_TAG ?= 1.0
 IMAGE ?= $(REGISTRY)/$(IMAGE_NAME):$(IMAGE_TAG)
 PLATFORM ?= "linux/amd64,linux/arm64"
+CLUSTER ?= nyu-devops
 
 .PHONY: help
 help: ## Display this help
@@ -27,6 +28,7 @@ venv: ## Create a Python virtual environment
 .PHONY: install
 install: ## Install dependencies
 	$(info Installing dependencies...)
+	sudo python3 -m pip install --upgrade pip wheel
 	sudo pip install -r requirements.txt
 
 .PHONY: lint
@@ -34,12 +36,12 @@ lint: ## Run the linter
 	$(info Running linting...)
 	flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 	flake8 . --count --max-complexity=10 --max-line-length=127 --statistics
-	pylint service
+	pylint service tests --max-line-length=127
 
-.PHONY: test
-test: ## Run the unit tests
+.PHONY: tests
+tests: ## Run the unit tests
 	$(info Running tests...)
-	nosetests --with-spec --spec-color
+	nosetests -vv --with-spec --spec-color --with-coverage --cover-package=service
 
 .PHONY: run
 run: ## Run the service
@@ -56,6 +58,16 @@ cluster_rm: ## Remove a K3D Kubernetes cluster
 	$(info Removing Kubernetes cluster...)
 	k3d cluster delete
 
+.PHONY: login
+login: ## Login to IBM Cloud using yur api key
+	$(info Logging into IBM Cloud cluster $(CLUSTER)...)
+	ibmcloud login -a cloud.ibm.com -g Default -r us-south --apikey @~/apikey.json
+	ibmcloud cr login
+	ibmcloud ks cluster config --cluster $(CLUSTER)
+	ibmcloud ks workers --cluster $(CLUSTER)
+	kubectl cluster-info
+
+.PHONY: tekton
 tekton: ## Install Tekton
 	$(info Installing Tekton in the Cluster...)
 	kubectl apply --filename https://storage.googleapis.com/tekton-releases/pipeline/latest/release.yaml
@@ -82,7 +94,7 @@ init:	## Creates the buildx instance
 .PHONY: build
 build:	## Build all of the project Docker images
 	$(info Building $(IMAGE) for $(PLATFORM)...)
-	docker build --pull --tag $(IMAGE) .
+	docker build --rm --pull --tag $(IMAGE) .
 
 .PHONY: buildx
 buildx:	## Build multi-platform image with buildx
