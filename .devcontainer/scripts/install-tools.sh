@@ -23,29 +23,43 @@ echo "alias ku='/usr/local/bin/kustomize'" >> $HOME/.bash_aliases
 echo "**********************************************************************"
 echo "Install Tekton CLI..."
 echo "**********************************************************************"
-curl -LO https://github.com/tektoncd/cli/releases/download/v0.25.0/tkn_0.25.0_Linux_x86_64.tar.gz
-sudo tar xvzf tkn_0.25.0_Linux_x86_64.tar.gz -C /usr/local/bin/ tkn
+if [ $(uname -m) == aarch64 ]; then
+    echo "Installing Tekton for ARM64..."
+    curl https://github.com/tektoncd/cli/releases/download/v0.26.1/tkn_0.26.1_Linux_arm64.tar.gz --output tekton.tar.gz
+else
+    echo "Installing Toekton for x86_64..."
+    curl https://github.com/tektoncd/cli/releases/download/v0.26.1/tkn_0.26.1_Linux_x86_64.tar.gz --output tekton.tar.gz
+fi;
+sudo tar xvzf tekton.tar.gz -C /usr/local/bin/ tkn
 sudo ln -s /usr/local/bin/tkn /usr/bin/tkn
-rm tkn_0.25.0_Linux_x86_64.tar.gz 
+rm tekton.tar.gz
 
 echo "**********************************************************************"
 echo "Installing IBM Cloud CLI..."
 echo "**********************************************************************"
 curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
 echo "source /usr/local/ibmcloud/autocomplete/bash_autocomplete" >> $HOME/.bashrc
-# Install user mode tools
-ibmcloud plugin install container-service -r 'IBM Cloud'
+# Install user mode IBM Cloud plugins
 ibmcloud plugin install container-registry -r 'IBM Cloud'
+ibmcloud plugin install kubernetes-service -r 'IBM Cloud'
+ibmcloud plugin install cloud-object-storage -r 'IBM Cloud'
 echo "Creating aliases for ibmcloud tools..."
 echo "alias ic='/usr/local/bin/ibmcloud'" >> $HOME/.bash_aliases
+
+# echo "**********************************************************************"
+# echo "Install OpenShift CLI..."
+# echo "**********************************************************************"
+# curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz --output oc.tar.gz
+# sudo tar xvzf oc.tar.gz -C /usr/local/bin/ oc
+# sudo ln -s /usr/local/bin/oc /usr/bin/oc
+# rm oc.tar.gz
 
 # Platform specific installs
 if [ $(uname -m) == aarch64 ]; then
     echo "Installing YQ for ARM64..."
     sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_arm64
-    sudo chmod a+x /usr/local/bin/yq
 else
     echo "Installing YQ for x86_64..."
     sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-    sudo chmod a+x /usr/local/bin/yq
 fi;
+sudo chmod a+x /usr/local/bin/yq
