@@ -50,7 +50,7 @@ run: ## Run the service
 
 .PHONY: cluster
 cluster: ## Create a K3D Kubernetes cluster with load balancer and registry
-	$(info Creating Kubernetes cluster with a registry...)
+	$(info Creating Kubernetes cluster with a registry and 1 node...)
 	k3d cluster create --agents 1 --registry-create cluster-registry:0.0.0.0:32000 --port '8080:80@loadbalancer'
 
 .PHONY: cluster-rm
@@ -74,6 +74,12 @@ tekton: ## Install Tekton
 	kubectl apply --filename https://storage.googleapis.com/tekton-releases/triggers/latest/release.yaml
 	kubectl apply --filename https://storage.googleapis.com/tekton-releases/triggers/latest/interceptors.yaml
 	kubectl apply --filename https://storage.googleapis.com/tekton-releases/dashboard/latest/tekton-dashboard-release.yaml
+
+.PHONY: clustertasks
+clustertasks: ## Create Tekton Cluster Tasks
+	$(info Creating Tekton Cluster Tasks...)
+	wget -qO - https://raw.githubusercontent.com/tektoncd/catalog/main/task/openshift-client/0.2/openshift-client.yaml | sed 's/kind: Task/kind: ClusterTask/g' | kubectl create -f -
+	wget -qO - https://raw.githubusercontent.com/tektoncd/catalog/main/task/buildah/0.4/buildah.yaml | sed 's/kind: Task/kind: ClusterTask/g' | kubectl create -f -
 
 .PHONY: deploy
 depoy: ## Deploy the service on local Kubernetes

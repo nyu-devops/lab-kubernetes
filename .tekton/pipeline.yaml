@@ -3,8 +3,12 @@ kind: Pipeline
 metadata:  
   name: cd-pipeline
 spec:
+  description: This pipeline clones tests, lints, builds, and deploys a container to Kubernetes
   workspaces:
     - name: pipeline-workspace
+      description: | 
+        This workspace contains the cloned repo files, so they can be read by the
+        next task.
   params:
     - name: app-name
     - name: build-image
@@ -12,7 +16,7 @@ spec:
     - name: branch
       default: master
   tasks:
-    - name: clone
+    - name: checkout
       workspaces:
         - name: output
           workspace: pipeline-workspace          
