@@ -25,6 +25,8 @@
 		"redhat.vscode-yaml",
 		"ms-azuretools.vscode-docker",
 		"ms-kubernetes-tools.vscode-kubernetes-tools",
+		"redhat.vscode-tekton-pipelines",
+		"redhat.vscode-knative",
 		"inercia.vscode-k3d",
 		"bbenoist.vagrant",
 		"streetsidesoftware.code-spell-checker"

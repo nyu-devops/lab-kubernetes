@@ -27,12 +27,26 @@ if [ $(uname -m) == aarch64 ]; then
     echo "Installing Tekton for ARM64..."
     curl https://github.com/tektoncd/cli/releases/download/v0.26.1/tkn_0.26.1_Linux_arm64.tar.gz --output tekton.tar.gz
 else
-    echo "Installing Toekton for x86_64..."
+    echo "Installing Tekton for x86_64..."
     curl https://github.com/tektoncd/cli/releases/download/v0.26.1/tkn_0.26.1_Linux_x86_64.tar.gz --output tekton.tar.gz
 fi;
 sudo tar xvzf tekton.tar.gz -C /usr/local/bin/ tkn
 sudo ln -s /usr/local/bin/tkn /usr/bin/tkn
 rm tekton.tar.gz
+
+echo "**********************************************************************"
+echo "Install Knative CLI..."
+echo "**********************************************************************"
+if [ $(uname -m) == aarch64 ]; then
+    echo "Installing Knative for ARM64..."
+    wget -q https://github.com/knative/client/releases/download/knative-v1.9.0/kn-linux-arm64 -O kn
+else
+    echo "Installing Knative for x86_64..."
+    wget -q https://github.com/knative/client/releases/download/knative-v1.9.0/kn-linux-amd64 -O kn
+fi;
+chmod +x kn
+sudo install kn /usr/local/bin
+rm kn
 
 echo "**********************************************************************"
 echo "Installing IBM Cloud CLI..."

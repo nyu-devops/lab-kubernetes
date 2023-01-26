@@ -81,6 +81,14 @@ clustertasks: ## Create Tekton Cluster Tasks
 	wget -qO - https://raw.githubusercontent.com/tektoncd/catalog/main/task/openshift-client/0.2/openshift-client.yaml | sed 's/kind: Task/kind: ClusterTask/g' | kubectl create -f -
 	wget -qO - https://raw.githubusercontent.com/tektoncd/catalog/main/task/buildah/0.4/buildah.yaml | sed 's/kind: Task/kind: ClusterTask/g' | kubectl create -f -
 
+.PHONY: knative
+knative: ## Install Knative
+	$(info Installing Knative in the Cluster...)
+	kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.8.3/serving-crds.yaml
+	kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.8.3/serving-core.yaml
+	kubectl apply -f https://github.com/knative/eventing/releases/download/knative-v1.8.5/eventing-crds.yaml
+	kubectl apply -f https://github.com/knative/eventing/releases/download/knative-v1.8.5/eventing-core.yaml
+
 .PHONY: deploy
 depoy: ## Deploy the service on local Kubernetes
 	$(info Deploying service locally...)
