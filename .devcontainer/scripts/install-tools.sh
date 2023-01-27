@@ -49,6 +49,21 @@ sudo install kn /usr/local/bin
 rm kn
 
 echo "**********************************************************************"
+echo "Install Knative Functions..."
+echo "**********************************************************************"
+if [ $(uname -m) == aarch64 ]; then
+    echo "Installing Knative Functions for ARM64..."
+    wget -q https://github.com/knative/func/releases/download/knative-v1.9.0/func_linux_arm64 -O kn-func
+else
+    echo "Installing Knative Functions for x86_64..."
+    wget -q https://github.com/knative/func/releases/download/knative-v1.9.0/func_linux_amd64 -O kn-func
+fi;
+chmod +x kn-func
+sudo install kn-func /usr/local/bin
+sudo ln -s /usr/local/bin/kn-func /usr/local/bin/func
+rm kn-func
+
+echo "**********************************************************************"
 echo "Installing IBM Cloud CLI..."
 echo "**********************************************************************"
 curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
