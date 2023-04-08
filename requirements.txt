@@ -4,7 +4,7 @@ Werkzeug==2.1.2
 
 # Build dependencies
 Flask==2.1.2
-redis==4.2.2
+redis==4.5.4
 python-dotenv==0.20.0
 
 # Runtime dependencies
