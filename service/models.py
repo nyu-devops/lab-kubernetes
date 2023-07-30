@@ -26,6 +26,16 @@ logger = logging.getLogger(__name__)
 DATABASE_URI = os.getenv("DATABASE_URI", "redis://localhost:6379")
 
 
+def init_db(app):
+    """Initialize the Redis database"""
+    try:
+        app.logger.info("Initializing the Redis database")
+        Counter.connect(DATABASE_URI)
+        app.logger.info("Connected!")
+    except DatabaseConnectionError as err:
+        app.logger.error(str(err))
+
+
 class DatabaseConnectionError(RedisConnectionError):
     """Indicates that a database connection error has occurred"""
 
@@ -72,7 +82,7 @@ class Counter():
 
     def serialize(self):
         """Creates a Python dictionary from the instance"""
-        return dict(name=self.name, counter=int(Counter.redis.get(self.name)))
+        return {"name": self.name, "counter": int(Counter.redis.get(self.name))}
 
     ######################################################################
     #  F I N D E R   M E T H O D S
@@ -83,7 +93,7 @@ class Counter():
         """Returns all of the counters"""
         try:
             counters = [
-                dict(name=key, counter=int(cls.redis.get(key)))
+                {"name": key, "counter": int(cls.redis.get(key))}
                 for key in cls.redis.keys("*")
             ]
         except Exception as err:

@@ -16,6 +16,7 @@
 Package for the application models and service routes
 """
 import os
+import sys
 import logging
 from flask import Flask
 from service.utils import log_handlers
@@ -31,7 +32,7 @@ app = Flask(__name__)
 
 # Dependencies require we import the routes AFTER the Flask app is created
 # pylint: disable=wrong-import-position, wrong-import-order, cyclic-import
-from service import routes
+from service import routes, models
 from service.utils import error_handlers  # noqa: F401, E402
 
 # Set up logging for production
@@ -42,3 +43,10 @@ app.logger.info("  H I T   C O U N T E R   S E R V I C E  ".center(70, "*"))
 app.logger.info(70 * "*")
 
 app.logger.info("Service initialized!")
+
+try:
+    models.init_db(app)
+except Exception as error:  # pylint: disable=broad-except
+    app.logger.critical("%s: Cannot continue", error)
+    # gunicorn requires exit code 4 to stop spawning workers when they die
+    sys.exit(4)

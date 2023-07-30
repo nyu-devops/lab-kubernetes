@@ -36,14 +36,14 @@ install: ## Install dependencies
 .PHONY: lint
 lint: ## Run the linter
 	$(info Running linting...)
-	flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-	flake8 . --count --max-complexity=10 --max-line-length=127 --statistics
+	flake8 service tests --count --select=E9,F63,F7,F82 --show-source --statistics
+	flake8 service tests --count --max-complexity=10 --max-line-length=127 --statistics
 	pylint service tests --max-line-length=127
 
 .PHONY: tests
 tests: ## Run the unit tests
 	$(info Running tests...)
-	nosetests -vv --with-spec --spec-color --with-coverage --cover-package=service
+	green -vvv --processes=1 --run-coverage --termcolor --minimum-coverage=95
 
 .PHONY: run
 run: ## Run the service
@@ -108,7 +108,7 @@ depoy: ## Deploy the service on local Kubernetes
 init: export DOCKER_BUILDKIT=1
 init:	## Creates the buildx instance
 	$(info Initializing Builder...)
-	docker buildx create --use --name=qemu
+	-docker buildx create --use --name=qemu
 	docker buildx inspect --bootstrap
 
 .PHONY: build

@@ -15,7 +15,7 @@
 Redis Counter Demo in Docker
 """
 from flask import jsonify, abort, url_for
-from service import app, DATABASE_URI
+from service import app
 from service.utils import status  # HTTP Status Codes
 from service.models import Counter, DatabaseConnectionError
 
@@ -26,7 +26,7 @@ from service.models import Counter, DatabaseConnectionError
 @app.route("/health")
 def health():
     """Health Status"""
-    return jsonify(dict(status="OK")), status.HTTP_200_OK
+    return {"status": 'OK'}, status.HTTP_200_OK
 
 
 ############################################################
@@ -134,19 +134,3 @@ def delete_counters(name):
         abort(status.HTTP_503_SERVICE_UNAVAILABLE, err)
 
     return "", status.HTTP_204_NO_CONTENT
-
-
-############################################################
-#  U T I L I T Y   F U N C I O N S
-############################################################
-
-
-@app.before_first_request
-def init_db():
-    """Initialize the Redis database"""
-    try:
-        app.logger.info("Initializing the Redis database")
-        Counter.connect(DATABASE_URI)
-        app.logger.info("Connected!")
-    except DatabaseConnectionError as err:
-        app.logger.error(str(err))
