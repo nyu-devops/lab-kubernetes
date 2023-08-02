@@ -43,7 +43,7 @@ lint: ## Run the linter
 .PHONY: tests
 tests: ## Run the unit tests
 	$(info Running tests...)
-	green -vvv --processes=1 --run-coverage --termcolor --minimum-coverage=95
+	export RETRY_COUNT=1; green -vvv --processes=1 --run-coverage --termcolor --minimum-coverage=95
 
 .PHONY: run
 run: ## Run the service
