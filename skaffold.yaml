@@ -9,12 +9,14 @@ build:
         dockerfile: Dockerfile
 test:
   - context: .
-    image: hitcounter
+    image: registry.local:5000/hitcounter
     custom:
       - command: DATABASE_URI=redis://localhost:6379/0 green
 manifests:
   rawYaml:
-    - deploy/**
-  # kustomize:
-  #   paths:
-  #     - "kubernetes/dev"
+    - deploy/deployment.yaml
+    - deploy/ingress.yaml
+    - deploy/pv.yaml
+    - deploy/redis.yaml
+    - deploy/secret.yaml
+    - deploy/service.yaml
