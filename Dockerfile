@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 # Create working folder and install dependencies
 WORKDIR /app
@@ -10,8 +10,8 @@ RUN pip install -U pip wheel && \
 COPY service/ ./service/
 
 # Switch to a non-root user
-RUN useradd --uid 1000 vagrant && chown -R vagrant /app
-USER vagrant
+RUN useradd --uid 1000 flask && chown -R flask /app
+USER flask
 
 # Expose any ports the app is expecting in the environment
 ENV FLASK_APP=service:app
