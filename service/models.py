@@ -18,6 +18,7 @@ Counter Model
 """
 import os
 import logging
+from retry import retry
 from redis import Redis
 from redis.exceptions import ConnectionError as RedisConnectionError
 
@@ -25,6 +26,10 @@ logger = logging.getLogger(__name__)
 
 DATABASE_URI = os.getenv("DATABASE_URI", "redis://localhost:6379")
 
+# global variables for retry (must be int)
+RETRY_COUNT = int(os.environ.get("RETRY_COUNT", 5))
+RETRY_DELAY = int(os.environ.get("RETRY_DELAY", 1))
+RETRY_BACKOFF = int(os.environ.get("RETRY_BACKOFF", 2))
 
 def init_db(app):
     """Initialize the Redis database"""
@@ -137,6 +142,8 @@ class Counter():
         return success
 
     @classmethod
+
+    @retry(DatabaseConnectionError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT, logger=logger)
     def connect(cls, database_uri=None):
         """Established database connection
 

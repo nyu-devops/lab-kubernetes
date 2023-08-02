@@ -16,12 +16,19 @@ Module: error_handlers
 """
 from flask import jsonify
 from service import app
+from service.models import DatabaseConnectionError
 from . import status
 
 
 ######################################################################
 # Error Handlers
 ######################################################################
+
+@app.errorhandler(DatabaseConnectionError)
+def request_validation_error(error):
+    """Handles database connection errors with 503 Service Unavailable"""
+    return service_unavailable(error)
+
 # @app.errorhandler(status.HTTP_400_BAD_REQUEST)
 # def bad_request(error):
 #     """Handles bad requests with 400_BAD_REQUEST"""

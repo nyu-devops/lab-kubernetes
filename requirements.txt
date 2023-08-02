@@ -4,6 +4,7 @@ Werkzeug==2.3.3
 # Runtime dependencies
 Flask==2.3.2
 redis==4.5.4
+retry2==0.9.5
 python-dotenv==0.21.1
 
 # Runtime dependencies
