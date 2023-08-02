@@ -36,14 +36,14 @@ install: ## Install dependencies
 .PHONY: lint
 lint: ## Run the linter
 	$(info Running linting...)
-	flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-	flake8 . --count --max-complexity=10 --max-line-length=127 --statistics
+	flake8 service tests --count --select=E9,F63,F7,F82 --show-source --statistics
+	flake8 service tests --count --max-complexity=10 --max-line-length=127 --statistics
 	pylint service tests --max-line-length=127
 
 .PHONY: tests
 tests: ## Run the unit tests
 	$(info Running tests...)
-	nosetests -vv --with-spec --spec-color --with-coverage --cover-package=service
+	export RETRY_COUNT=1; green -vvv --processes=1 --run-coverage --termcolor --minimum-coverage=95
 
 .PHONY: run
 run: ## Run the service
@@ -53,14 +53,18 @@ run: ## Run the service
 ##@ Kubernetes
 
 .PHONY: cluster
+# k3d cluster create --agents 1 --registry-create cluster-registry:0.0.0.0:32000 --port '8080:80@loadbalancer'
 cluster: ## Create a K3D Kubernetes cluster with load balancer and registry
 	$(info Creating Kubernetes cluster with a registry and 1 node...)
-	k3d cluster create --agents 1 --registry-create cluster-registry:0.0.0.0:32000 --port '8080:80@loadbalancer'
+	docker container run -d --name registry.local -v local_registry:/var/lib/registry --restart always -p 5000:5000 registry:2
+	k3d cluster create --config k3d-config.yaml
+	docker network connect k3d-k3s-default registry.local
 
 .PHONY: cluster-rm
 cluster-rm: ## Remove a K3D Kubernetes cluster
 	$(info Removing Kubernetes cluster...)
 	k3d cluster delete
+	docker stop registry.local && docker rm registry.local
 
 .PHONY: login
 login: ## Login to IBM Cloud using yur api key
@@ -108,7 +112,7 @@ depoy: ## Deploy the service on local Kubernetes
 init: export DOCKER_BUILDKIT=1
 init:	## Creates the buildx instance
 	$(info Initializing Builder...)
-	docker buildx create --use --name=qemu
+	-docker buildx create --use --name=qemu
 	docker buildx inspect --bootstrap
 
 .PHONY: build

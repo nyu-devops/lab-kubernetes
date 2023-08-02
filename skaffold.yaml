@@ -1,0 +1,22 @@
+apiVersion: skaffold/v4beta6
+kind: Config
+metadata:
+  name: hitcounter
+build:
+  artifacts:
+    - image: registry.local:5000/hitcounter
+      docker:
+        dockerfile: Dockerfile
+test:
+  - context: .
+    image: registry.local:5000/hitcounter
+    custom:
+      - command: export RETRY_COUNT=1; DATABASE_URI=redis://localhost:6379/0 green
+manifests:
+  rawYaml:
+    - deploy/deployment.yaml
+    - deploy/ingress.yaml
+    - deploy/pv.yaml
+    - deploy/redis.yaml
+    - deploy/secret.yaml
+    - deploy/service.yaml

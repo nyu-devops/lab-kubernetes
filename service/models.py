@@ -18,12 +18,28 @@ Counter Model
 """
 import os
 import logging
+from retry import retry
 from redis import Redis
 from redis.exceptions import ConnectionError as RedisConnectionError
 
 logger = logging.getLogger(__name__)
 
 DATABASE_URI = os.getenv("DATABASE_URI", "redis://localhost:6379")
+
+# global variables for retry (must be int)
+RETRY_COUNT = int(os.environ.get("RETRY_COUNT", 5))
+RETRY_DELAY = int(os.environ.get("RETRY_DELAY", 1))
+RETRY_BACKOFF = int(os.environ.get("RETRY_BACKOFF", 2))
+
+
+def init_db(app):
+    """Initialize the Redis database"""
+    try:
+        app.logger.info("Initializing the Redis database")
+        Counter.connect(DATABASE_URI)
+        app.logger.info("Connected!")
+    except DatabaseConnectionError as err:
+        app.logger.error(str(err))
 
 
 class DatabaseConnectionError(RedisConnectionError):
@@ -72,7 +88,7 @@ class Counter():
 
     def serialize(self):
         """Creates a Python dictionary from the instance"""
-        return dict(name=self.name, counter=int(Counter.redis.get(self.name)))
+        return {"name": self.name, "counter": int(Counter.redis.get(self.name))}
 
     ######################################################################
     #  F I N D E R   M E T H O D S
@@ -83,7 +99,7 @@ class Counter():
         """Returns all of the counters"""
         try:
             counters = [
-                dict(name=key, counter=int(cls.redis.get(key)))
+                {"name": key, "counter": int(cls.redis.get(key))}
                 for key in cls.redis.keys("*")
             ]
         except Exception as err:
@@ -127,6 +143,7 @@ class Counter():
         return success
 
     @classmethod
+    @retry(DatabaseConnectionError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT, logger=logger)
     def connect(cls, database_uri=None):
         """Established database connection
 

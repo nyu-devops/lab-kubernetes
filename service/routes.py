@@ -15,9 +15,9 @@
 Redis Counter Demo in Docker
 """
 from flask import jsonify, abort, url_for
-from service import app, DATABASE_URI
-from service.utils import status  # HTTP Status Codes
-from service.models import Counter, DatabaseConnectionError
+from service import app
+from service.common import status  # HTTP Status Codes
+from service.models import Counter
 
 
 ############################################################
@@ -26,7 +26,7 @@ from service.models import Counter, DatabaseConnectionError
 @app.route("/health")
 def health():
     """Health Status"""
-    return jsonify(dict(status="OK")), status.HTTP_200_OK
+    return {"status": 'OK'}, status.HTTP_200_OK
 
 
 ############################################################
@@ -45,11 +45,7 @@ def index():
 def list_counters():
     """Lists all counters in the database"""
     app.logger.info("Request to list all counters...")
-    try:
-        counters = Counter.all()
-    except DatabaseConnectionError as err:
-        abort(status.HTTP_503_SERVICE_UNAVAILABLE, err)
-
+    counters = Counter.all()
     return jsonify(counters)
 
 
@@ -61,11 +57,7 @@ def read_counters(name):
     """Reads a counter from the database"""
     app.logger.info("Request to Read counter: %s...", name)
 
-    try:
-        counter = Counter.find(name)
-    except DatabaseConnectionError as err:
-        abort(status.HTTP_503_SERVICE_UNAVAILABLE, err)
-
+    counter = Counter.find(name)
     if not counter:
         abort(status.HTTP_404_NOT_FOUND, f"Counter [{name}] does not exist")
 
@@ -80,14 +72,11 @@ def read_counters(name):
 def create_counters(name):
     """Creates a counter in the database"""
     app.logger.info("Request to Create counter...")
-    try:
-        counter = Counter.find(name)
-        if counter is not None:
-            return jsonify(code=409, error=f"Counter [{name}] already exists"), 409
+    counter = Counter.find(name)
+    if counter is not None:
+        return jsonify(code=409, error=f"Counter [{name}] already exists"), 409
 
-        counter = Counter(name)
-    except DatabaseConnectionError as err:
-        abort(status.HTTP_503_SERVICE_UNAVAILABLE, err)
+    counter = Counter(name)
 
     location_url = url_for("read_counters", name=name, _external=True)
     return (
@@ -104,17 +93,14 @@ def create_counters(name):
 def update_counters(name):
     """Updates a counter in the database"""
     app.logger.info("Request to Update counter...")
-    try:
-        counter = Counter.find(name)
-        if counter is None:
-            return (
-                jsonify(code=404, error=f"Counter [{name}] does not exist"),
-                404,
-            )
+    counter = Counter.find(name)
+    if counter is None:
+        return (
+            jsonify(code=404, error=f"Counter [{name}] does not exist"),
+            404,
+        )
 
-        count = counter.increment()
-    except DatabaseConnectionError as err:
-        abort(status.HTTP_503_SERVICE_UNAVAILABLE, err)
+    count = counter.increment()
 
     return jsonify(name=name, counter=count)
 
@@ -126,27 +112,8 @@ def update_counters(name):
 def delete_counters(name):
     """Removes te counter from teh database"""
     app.logger.info("Request to Delete counter...")
-    try:
-        counter = Counter.find(name)
-        if counter:
-            del counter.value
-    except DatabaseConnectionError as err:
-        abort(status.HTTP_503_SERVICE_UNAVAILABLE, err)
+    counter = Counter.find(name)
+    if counter:
+        del counter.value
 
     return "", status.HTTP_204_NO_CONTENT
-
-
-############################################################
-#  U T I L I T Y   F U N C I O N S
-############################################################
-
-
-@app.before_first_request
-def init_db():
-    """Initialize the Redis database"""
-    try:
-        app.logger.info("Initializing the Redis database")
-        Counter.connect(DATABASE_URI)
-        app.logger.info("Connected!")
-    except DatabaseConnectionError as err:
-        app.logger.error(str(err))
