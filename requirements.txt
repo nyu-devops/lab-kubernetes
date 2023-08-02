@@ -21,4 +21,4 @@ green==3.4.3
 coverage==7.1.0
 
 # Utilities
-httpie==3.2.1
+httpie==3.2.2

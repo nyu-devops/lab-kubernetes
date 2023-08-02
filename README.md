@@ -44,3 +44,22 @@ kubectl -n default get secret all-icr-io -o yaml | sed 's/default/dev/g' | kubec
 
 What the second command does is to get the `ImagePullSecret` named `all-icr-io` from the `default` namespace and running it through `sed` to change the `namespace:` to whatever is needed, and applying it to the `dev` namespace.
 
+### Use with Minikube
+
+In order to use Minikube you need to enable the ingress and registry addons.
+
+Here are the commands to get `minikube` working:
+
+```bash
+minikube start
+minikube addons enable ingress
+minikube addons enable registry
+```
+
+You can also specify these are start up with:
+
+```bash
+minikube start --addons ingress --addons registry
+```
+
+See Minikube [documentation](https://minikube.sigs.k8s.io/docs/start/) for reference.
