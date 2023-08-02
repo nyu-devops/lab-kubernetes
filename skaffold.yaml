@@ -11,7 +11,7 @@ test:
   - context: .
     image: registry.local:5000/hitcounter
     custom:
-      - command: DATABASE_URI=redis://localhost:6379/0 green
+      - command: export RETRY_COUNT=1; DATABASE_URI=redis://localhost:6379/0 green
 manifests:
   rawYaml:
     - deploy/deployment.yaml
