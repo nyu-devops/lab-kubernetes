@@ -56,15 +56,14 @@ run: ## Run the service
 # k3d cluster create --agents 1 --registry-create cluster-registry:0.0.0.0:32000 --port '8080:80@loadbalancer'
 cluster: ## Create a K3D Kubernetes cluster with load balancer and registry
 	$(info Creating Kubernetes cluster with a registry and 1 node...)
-	docker container run -d --name registry.local -v local_registry:/var/lib/registry --restart always -p 5000:5000 registry:2
-	k3d cluster create --config k3d-config.yaml
-	docker network connect k3d-k3s-default registry.local
+	k3d registry create registry.local --port 5000
+	k3d cluster create devops --config k3d-config.yaml
 
 .PHONY: cluster-rm
 cluster-rm: ## Remove a K3D Kubernetes cluster
 	$(info Removing Kubernetes cluster...)
-	k3d cluster delete
-	docker stop registry.local && docker rm registry.local
+	k3d cluster delete devops
+	k3d registry delete registry.local
 
 .PHONY: login
 login: ## Login to IBM Cloud using yur api key

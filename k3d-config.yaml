@@ -1,8 +1,5 @@
-# k3d cluster create --agents 1 --registry-create cluster-registry:0.0.0.0:32000 --port '8080:80@loadbalancer'
----
 apiVersion: k3d.io/v1alpha5
 kind: Simple
-# name: devops
 servers: 1
 agents: 1
 ports:
@@ -12,6 +9,6 @@ ports:
 registries:
   config: |
     mirrors:
-      "registry.local:5000":
+      "k3d-registry.local:5000":
         endpoint:
-          - http://registry.local:5000
+          - http://k3d-registry.local:5000
