@@ -10,7 +10,6 @@ services:
     init: true
     volumes:
       - ..:/app
-      - ~/.bluemix/apikey.json:/home/vscode/apikey.json
     command: sleep infinity
     environment:
       FLASK_APP: service:app

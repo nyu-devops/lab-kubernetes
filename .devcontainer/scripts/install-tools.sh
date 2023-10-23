@@ -43,11 +43,6 @@ echo "**********************************************************************"
 curl -Lo skaffold "https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-$ARCH"
 sudo install skaffold /usr/local/bin/
 
-echo "**********************************************************************"
-echo "Installing Azure CLI..."
-echo "**********************************************************************"
-curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-
 # echo "**********************************************************************"
 # echo "Installing Knative for $ARCH..."
 # echo "**********************************************************************"
