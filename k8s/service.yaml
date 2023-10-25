@@ -3,10 +3,11 @@ kind: Service
 metadata:
   name: hitcounter
 spec:
-  type: NodePort
-  internalTrafficPolicy: Local
+  type: ClusterIP
+  selector:
+    app: hitcounter
   ports:
     - name: http
       protocol: TCP
       port: 8080
-      nodePort: 31001
+      targetPort: 8080
