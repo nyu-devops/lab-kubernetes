@@ -64,15 +64,6 @@ cluster-rm: ## Remove a K3D Kubernetes cluster
 	k3d cluster delete devops
 	k3d registry delete registry.local
 
-.PHONY: login
-login: ## Login to IBM Cloud using yur api key
-	$(info Logging into IBM Cloud cluster $(CLUSTER)...)
-	ibmcloud login -a cloud.ibm.com -g Default -r us-south --apikey @~/apikey.json
-	ibmcloud cr login
-	ibmcloud ks cluster config --cluster $(CLUSTER)
-	ibmcloud ks workers --cluster $(CLUSTER)
-	kubectl cluster-info
-
 .PHONY: tekton
 tekton: ## Install Tekton
 	$(info Installing Tekton in the Cluster...)
