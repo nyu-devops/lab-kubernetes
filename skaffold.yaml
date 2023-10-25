@@ -9,9 +9,9 @@ build:
         dockerfile: Dockerfile
 test:
   - context: .
-    image: registry.local:32000/hitcounter
+    image: hitcounter
     custom:
-      - command: export RETRY_COUNT=1; DATABASE_URI=redis://localhost:6379/0 green
+      - command: export DATABASE_URI=redis://localhost:6379/0 green
 manifests:
   rawYaml:
     - k8s/deployment.yaml
