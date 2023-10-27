@@ -4,9 +4,12 @@ metadata:
   name: hitcounter
 build:
   artifacts:
-    - image: registry.local:32000/hitcounter
+    - image: hitcounter
       docker:
         dockerfile: Dockerfile
+      # sync:
+      #   infer:
+      #   - 'service/**/*.py'
 test:
   - context: .
     image: hitcounter
