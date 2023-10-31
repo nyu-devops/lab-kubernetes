@@ -1,5 +1,6 @@
-apiVersion: k3d.io/v1alpha5
+apiVersion: k3d.io/v1alpha3
 kind: Simple
+name: devops
 servers: 1
 agents: 1
 ports:
@@ -7,8 +8,12 @@ ports:
   nodeFilters:
   - loadbalancer
 registries:
+  create: 
+    name: cluster-registry
+    host: "0.0.0.0"
+    hostPort: "32000"
   config: |
     mirrors:
-      "k3d-registry.local:5000":
+      "cluster-registry:32000":
         endpoint:
-          - http://k3d-registry.local:5000
+          - http://cluster-registry:32000

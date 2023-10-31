@@ -59,9 +59,6 @@ secret: ## Generate a secret hex key
 
 ##@ Kubernetes
 
-# k3d registry create registry.local --port 5000
-# k3d cluster create devops --agents 1 --registry-use k3d-registry.local:5000 --port '8080:80@loadbalancer'
-
 .PHONY: cluster
 cluster: ## Create a K3D Kubernetes cluster with load balancer and registry
 	$(info Creating Kubernetes cluster with a registry and 1 worker node...)
