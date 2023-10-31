@@ -30,27 +30,7 @@ sudo install -c -m 0755 k9s /usr/local/bin
 rm k9s.tar.gz
 
 echo "**********************************************************************"
-echo "Install Kustomize CLI..."
-echo "**********************************************************************"
-curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
-sudo mv kustomize /usr/local/bin/kustomize
-echo "Creating ku alias for kustomize..."
-echo "alias ku='/usr/local/bin/kustomize'" >> $HOME/.bash_aliases
-
-echo "**********************************************************************"
 echo "Installing Skaffold..."
 echo "**********************************************************************"
 curl -Lo skaffold "https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-$ARCH"
 sudo install skaffold /usr/local/bin/
-
-# echo "**********************************************************************"
-# echo "Installing Knative for $ARCH..."
-# echo "**********************************************************************"
-# curl -Lo kn "https://github.com/knative/client/releases/download/knative-v1.11.0/kn-linux-$ARCH"
-# sudo install kn /usr/local/bin/
-
-echo "**********************************************************************"
-echo "Installing YQ..."
-echo "**********************************************************************"
-sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_$ARCH
-sudo chmod a+x /usr/local/bin/yq
