@@ -1,5 +1,5 @@
 #!/bin/bash
-echo "Setting up Docker lab environment..."
+echo "Setting up Kubernetes lab environment..."
 docker pull python:3.11-slim
 docker run -d --name redis --restart always -p 6379:6379 -v redis:/data redis:6-alpine
 echo Setting up registry.local...

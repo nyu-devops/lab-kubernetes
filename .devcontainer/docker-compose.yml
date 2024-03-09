@@ -12,7 +12,7 @@ services:
       - ..:/app
     command: sleep infinity
     environment:
-      FLASK_APP: service:app
+      FLASK_APP: wsgi:app
       PORT: 8080
       DATABASE_URI: "redis://redis:6379/0"
     networks:

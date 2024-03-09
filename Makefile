@@ -27,13 +27,14 @@ clean:	## Removes all dangling build cache
 .PHONY: venv
 venv: ## Create a Python virtual environment
 	$(info Creating Python 3 virtual environment...)
-	python3 -m venv .venv
+	poetry config virtualenvs.in-project true
+	poetry shell
 
 .PHONY: install
 install: ## Install dependencies
 	$(info Installing dependencies...)
-	sudo python3 -m pip install --upgrade pip wheel
-	sudo pip install -r requirements.txt
+	sudo poetry config virtualenvs.create false
+	sudo poetry install
 
 .PHONY: lint
 lint: ## Run the linter
@@ -45,7 +46,9 @@ lint: ## Run the linter
 .PHONY: tests
 tests: ## Run the unit tests
 	$(info Running tests...)
-	export RETRY_COUNT=1; green -vvv --processes=1 --run-coverage --termcolor --minimum-coverage=95
+	export RETRY_COUNT=1; pytest --pspec --cov=service --cov-fail-under=95
+
+##@ Runtime
 
 .PHONY: run
 run: ## Run the service

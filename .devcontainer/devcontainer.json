@@ -12,9 +12,14 @@
 					"editor.defaultFormatter": "ms-python.black-formatter",
 					"editor.formatOnSave": true
 				},
-				"python.linting.enabled": true,
-				"python.linting.pylintEnabled": true,
+				"git.mergeEditor": true,
 				"markdown-preview-github-styles.colorTheme": "light",
+				"makefile.extensionOutputFolder": "/tmp",
+				"python.testing.unittestEnabled": false,
+				"python.testing.pytestEnabled": true,			
+				"python.testing.pytestArgs": [
+					"tests"
+				],
 				"files.exclude": {
 					"**/.git": true,
 					"**/.DS_Store": true,
@@ -22,32 +27,34 @@
 					"**/__pycache__": true,
 					"**/.pytest_cache": true
 				}
-			},			
+			},
 			"extensions": [
-				"VisualStudioExptTeam.vscodeintellicode",
 				"ms-python.python",
+				"ms-python.vscode-pylance",
 				"ms-python.pylint",
 				"ms-python.flake8",
-				"ms-python.vscode-pylance",
 				"ms-python.black-formatter",
-				"njpwerner.autodocstring",
-				"wholroyd.jinja",
+				"ms-vscode.makefile-tools",
 				"yzhang.markdown-all-in-one",
+				"DavidAnson.vscode-markdownlint",
+				"bierner.github-markdown-preview",
 				"hnw.vscode-auto-open-markdown-preview",
 				"bierner.markdown-preview-github-styles",
-				"davidanson.vscode-markdownlint",
 				"tamasfe.even-better-toml",
 				"donjayamanne.githistory",
 				"GitHub.vscode-pull-request-github",
+				"github.vscode-github-actions",
 				"hbenl.vscode-test-explorer",
 				"LittleFoxTeam.vscode-python-test-adapter",
+				"njpwerner.autodocstring",
+				"wholroyd.jinja",
 				"redhat.vscode-yaml",
 				"ms-azuretools.vscode-docker",
 				"ms-kubernetes-tools.vscode-kubernetes-tools",
 				"inercia.vscode-k3d",
 				"rangav.vscode-thunder-client",
-				"bbenoist.vagrant",
-				"streetsidesoftware.code-spell-checker"
+				"streetsidesoftware.code-spell-checker",
+				"bbenoist.vagrant"
 			]
 		}
 	},
