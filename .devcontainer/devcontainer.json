@@ -1,10 +1,20 @@
 // spell: disable
 {
 	"name": "Kubernetes",
-	"dockerComposeFile": "docker-compose.yml",
-	"service": "app",
-	"workspaceFolder": "/app",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": ".."
+    },
 	"remoteUser": "vscode",
+    "workspaceFolder": "/app",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/app,type=bind,consistency=delegated",
+    "runArgs": ["-h","nyu", "--name", "lab-kubernetes"],
+    "remoteEnv": {
+      "FLASK_DEBUG:": "True",
+      "FLASK_APP": "wsgi:app",
+      "PORT": "8080",
+	  "GUNICORN_BIND": "0.0.0.0:8080"
+    },
 	"customizations": {
 		"vscode": {
 			"settings": {
