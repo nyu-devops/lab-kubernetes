@@ -1,5 +1,5 @@
 ######################################################################
-# Copyright 2016, 2022 John Rofrano. All Rights Reserved.
+# Copyright 2016, 2024 John Rofrano. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ Counter Model
 """
 import os
 import logging
+from typing import List, Optional, Self
 from retry import retry
 from redis import Redis
 from redis.exceptions import ConnectionError as RedisConnectionError
@@ -32,21 +33,11 @@ RETRY_DELAY = int(os.environ.get("RETRY_DELAY", 1))
 RETRY_BACKOFF = int(os.environ.get("RETRY_BACKOFF", 2))
 
 
-def init_db(app):
-    """Initialize the Redis database"""
-    try:
-        app.logger.info("Initializing the Redis database")
-        Counter.connect(DATABASE_URI)
-        app.logger.info("Connected!")
-    except DatabaseConnectionError as err:
-        app.logger.error(str(err))
-
-
 class DatabaseConnectionError(RedisConnectionError):
-    """Indicates that a database connection error has occurred"""
+    """Generic Exception for Redis database connection errors"""
 
 
-class Counter():
+class Counter:
     """An integer counter that is persisted in Redis
 
     You can establish a connection to Redis using an environment
@@ -57,10 +48,16 @@ class Counter():
     This follows the same standards as SQLAlchemy URIs
     """
 
-    redis = None
+    redis: Redis = None
 
     def __init__(self, name: str = "hits", value: int = None):
-        """Constructor"""
+        """Constructor
+
+        :param name: Name of the counter (default is "hits")
+        :type name: str
+        :param value: Initial value of the counter (default is None)
+        :type value: int or None
+        """
         self.name = name
         if not value:
             self.value = 0
@@ -68,12 +65,12 @@ class Counter():
             self.value = value
 
     @property
-    def value(self):
+    def value(self) -> int:
         """Returns the current value of the counter"""
         return int(Counter.redis.get(self.name))
 
     @value.setter
-    def value(self, value):
+    def value(self, value: int):
         """Sets the value of the counter"""
         Counter.redis.set(self.name, value)
 
@@ -82,12 +79,12 @@ class Counter():
         """Removes the counter fom the database"""
         Counter.redis.delete(self.name)
 
-    def increment(self):
+    def increment(self) -> int:
         """Increments the current value of the counter by 1"""
         return Counter.redis.incr(self.name)
 
-    def serialize(self):
-        """Creates a Python dictionary from the instance"""
+    def serialize(self) -> dict:
+        """Converts a counter into a dictionary"""
         return {"name": self.name, "counter": int(Counter.redis.get(self.name))}
 
     ######################################################################
@@ -95,7 +92,7 @@ class Counter():
     ######################################################################
 
     @classmethod
-    def all(cls):
+    def all(cls) -> List[Self]:
         """Returns all of the counters"""
         try:
             counters = [
@@ -107,7 +104,7 @@ class Counter():
         return counters
 
     @classmethod
-    def find(cls, name):
+    def find(cls, name: str) -> Self:
         """Finds a counter with the name or returns None"""
         counter = None
         try:
@@ -119,8 +116,8 @@ class Counter():
         return counter
 
     @classmethod
-    def remove_all(cls):
-        """Deletes all of the counters"""
+    def remove_all(cls) -> None:
+        """Removes all of the keys in the database"""
         try:
             cls.redis.flushall()
         except Exception as err:
@@ -131,7 +128,7 @@ class Counter():
     ######################################################################
 
     @classmethod
-    def test_connection(cls):
+    def test_connection(cls) -> bool:
         """Test connection by pinging the host"""
         success = False
         try:
@@ -143,8 +140,14 @@ class Counter():
         return success
 
     @classmethod
-    @retry(DatabaseConnectionError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT, logger=logger)
-    def connect(cls, database_uri=None):
+    @retry(
+        DatabaseConnectionError,
+        delay=RETRY_DELAY,
+        backoff=RETRY_BACKOFF,
+        tries=RETRY_COUNT,
+        logger=logger,
+    )
+    def connect(cls, database_uri: Optional[str] = None):
         """Established database connection
 
         Arguments:

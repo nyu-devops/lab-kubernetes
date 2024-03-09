@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2016, 2023 John J. Rofrano. All Rights Reserved.
+# Copyright 2016, 2024 John J. Rofrano. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# pylint: disable=disallowed-name
 """
 Test cases for Counter Model
 
@@ -78,7 +79,7 @@ class CounterTests(TestCase):
         self.assertEqual(data["counter"], 0)
 
     def test_set_list_counters(self):
-        """It should List all of the counter"""
+        """It should List all of the counters"""
         _ = Counter("foo")
         _ = Counter("bar")
         counters = Counter.all()
@@ -88,13 +89,13 @@ class CounterTests(TestCase):
         """It should Find a counter"""
         _ = Counter("foo")
         _ = Counter("bar")
-        found = Counter.find("foo")
-        self.assertEqual(found.name, "foo")
+        foo = Counter.find("foo")
+        self.assertEqual(foo.name, "foo")
 
     def test_counter_not_found(self):
-        """It should not find a counter that doesn't exist"""
-        found = Counter.find("foo")
-        self.assertIsNone(found)
+        """It should not find a counter"""
+        foo = Counter.find("foo")
+        self.assertIsNone(foo)
 
     def test_set_get_counter(self):
         """It should Set and then Get the counter"""
@@ -129,17 +130,17 @@ class CounterTests(TestCase):
         self.assertEqual(self.counter.value, 0)
         self.counter.increment()
         self.assertEqual(self.counter.value, 1)
-        self.counter = Counter.find("hits")
-        self.counter.increment()
-        self.assertEqual(self.counter.value, 2)
+        counter = Counter.find("hits")
+        counter.increment()
+        self.assertEqual(counter.value, 2)
 
     @patch("redis.Redis.ping")
     def test_no_connection(self, ping_mock):
-        """It should Handle failed connection"""
+        """It should Handle a failed connection"""
         ping_mock.side_effect = RedisConnectionError()
         self.assertRaises(DatabaseConnectionError, self.counter.connect, DATABASE_URI)
 
-    @patch.dict(os.environ, {"DATABASE_URI": "", "RETRY_COUNT": "1"})
+    @patch.dict(os.environ, {"DATABASE_URI": ""})
     def test_missing_environment_creds(self):
-        """It should handle Missing environment credentials"""
+        """It should detect Missing environment credentials"""
         self.assertRaises(DatabaseConnectionError, self.counter.connect)
