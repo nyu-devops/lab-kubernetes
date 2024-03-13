@@ -1,4 +1,4 @@
-apiVersion: skaffold/v4beta7
+apiVersion: skaffold/v4beta9
 kind: Config
 metadata:
   name: hitcounter
@@ -7,19 +7,16 @@ build:
     - image: hitcounter
       docker:
         dockerfile: Dockerfile
-      # sync:
-      #   infer:
-      #   - 'service/**/*.py'
 test:
   - context: .
     image: hitcounter
     custom:
-      - command: export RETRY_COUNT=1; DATABASE_URI=redis://localhost:6379/0 green
+      - command: export RETRY_COUNT=1; DATABASE_URI=redis://localhost:6379/0 pytest
 manifests:
   rawYaml:
-    - k8s/deployment.yaml
-    - k8s/ingress.yaml
     - k8s/pv.yaml
-    - k8s/redis.yaml
     - k8s/secret.yaml
+    - k8s/redis.yaml
+    - k8s/deployment.yaml
     - k8s/service.yaml
+    - k8s/ingress.yaml
