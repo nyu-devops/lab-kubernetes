@@ -33,7 +33,7 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: redis-creds
-                key: uri
+                key: database-uri
         resources:
           limits:
             cpu: "0.25"
