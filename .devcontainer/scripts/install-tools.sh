@@ -34,3 +34,9 @@ echo "Installing Skaffold..."
 echo "**********************************************************************"
 curl -Lo skaffold "https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-$ARCH"
 sudo install skaffold /usr/local/bin/
+
+echo "**********************************************************************"
+echo "Installing DevSpace..."
+echo "**********************************************************************"
+curl -Lo devspace "https://github.com/loft-sh/devspace/releases/latest/download/devspace-linux-$ARCH"
+sudo install -c -m 0755 devspace /usr/local/bin

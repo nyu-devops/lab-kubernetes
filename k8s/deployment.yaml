@@ -22,7 +22,7 @@ spec:
       restartPolicy: Always
       containers:
       - name: hitcounter
-        image: cluster-registry:32000/hitcounter:1.0
+        image: cluster-registry:5000/hitcounter:1.0
         # image: hitcounter
         imagePullPolicy: IfNotPresent
         ports:
@@ -33,7 +33,7 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: redis-creds
-                key: uri
+                key: database-uri
         resources:
           limits:
             cpu: "0.25"
