@@ -24,7 +24,7 @@ sudo sh -c 'echo "127.0.0.1 cluster-registry" >> /etc/hosts'
 echo "**********************************************************************"
 echo "Installing K9s..."
 echo "**********************************************************************"
-curl -L -o k9s.tar.gz "https://github.com/derailed/k9s/releases/download/v0.27.3/k9s_Linux_$ARCH.tar.gz"
+curl -L -o k9s.tar.gz "https://github.com/derailed/k9s/releases/download/v0.32.5/k9s_Linux_$ARCH.tar.gz"
 tar xvzf k9s.tar.gz
 sudo install -c -m 0755 k9s /usr/local/bin
 rm k9s.tar.gz
