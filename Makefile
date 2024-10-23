@@ -64,8 +64,8 @@ secret: ## Generate a secret hex key
 
 .PHONY: cluster
 cluster: ## Create a K3D Kubernetes cluster with load balancer and registry
-	$(info Creating Kubernetes cluster with a registry and 1 worker node...)
-	k3d cluster create nyu-devops --agents 1 --registry-create cluster-registry:0.0.0.0:5000 --port '8080:80@loadbalancer'
+	$(info Creating Kubernetes cluster $(CLUSTER) with a registry and 1 worker node...)
+	k3d cluster create $(CLUSTER) --agents 1 --registry-create cluster-registry:0.0.0.0:5000 --port '8080:80@loadbalancer'
 
 .PHONY: cluster-rm
 cluster-rm: ## Remove a K3D Kubernetes cluster
