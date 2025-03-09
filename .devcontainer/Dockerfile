@@ -3,7 +3,7 @@ FROM python:3.11-slim
 
 # Add any tools that are needed beyond Python 3.11
 RUN apt-get update && \
-    apt-get install -y sudo vim make git zip tree curl wget jq procps net-tools && \
+    apt-get install -y sudo vim make git zip tree curl wget jq procps net-tools iputils-ping && \
     apt-get autoremove -y && \
     apt-get clean -y
 
@@ -12,7 +12,7 @@ ARG USERNAME=vscode
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
-# Create the user with passwordless sudo privileges
+# Create the user with password-less sudo privileges
 RUN groupadd --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME -s /bin/bash \
     && usermod -aG sudo $USERNAME \
@@ -22,10 +22,12 @@ RUN groupadd --gid $USER_GID $USERNAME \
 
 # Set up the Python development environment
 WORKDIR /app
-COPY pyproject.toml poetry.lock ./
-RUN sudo python -m pip install --upgrade pip poetry && \
-    sudo poetry config virtualenvs.create false && \
-    sudo poetry install
+COPY Pipfile Pipfile.lock ./
+RUN python -m pip install --upgrade pip pipenv && \
+    pipenv install --system --dev
+
+ENV PORT=8080
+EXPOSE $PORT
 
 ENV PORT 8080
 EXPOSE $PORT

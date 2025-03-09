@@ -1,22 +1,25 @@
+##################################################
+# Create production image
+##################################################
 FROM python:3.11-slim
 
-# Create working folder and install dependencies
+# Set up the Python production environment
 WORKDIR /app
-COPY pyproject.toml poetry.lock ./
-RUN python -m pip install --upgrade pip poetry && \
-    poetry config virtualenvs.create false && \
-    poetry install --without dev
+COPY Pipfile Pipfile.lock ./
+RUN python -m pip install --upgrade pip pipenv && \
+    pipenv install --system --deploy
 
 # Copy the application contents
 COPY wsgi.py .
 COPY service/ ./service/
 
-# Switch to a non-root user
-RUN useradd --uid 1000 flask && chown -R flask /app
+# Switch to a non-root user and set file ownership
+RUN useradd --uid 1001 flask && \
+    chown -R flask /app
 USER flask
 
 # Expose any ports the app is expecting in the environment
-ENV FLASK_APP=wsgi:app
+ENV FLASK_APP="wsgi:app"
 ENV PORT=8080
 EXPOSE $PORT
 

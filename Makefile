@@ -27,14 +27,12 @@ clean:	## Removes all dangling build cache
 .PHONY: venv
 venv: ## Create a Python virtual environment
 	$(info Creating Python 3 virtual environment...)
-	poetry config virtualenvs.in-project true
-	poetry shell
+	pipenv shell
 
 .PHONY: install
 install: ## Install dependencies
 	$(info Installing dependencies...)
-	sudo poetry config virtualenvs.create false
-	sudo poetry install
+	sudo pipenv install --system --dev
 
 .PHONY: lint
 lint: ## Run the linter
@@ -69,8 +67,8 @@ cluster: ## Create a K3D Kubernetes cluster with load balancer and registry
 
 .PHONY: cluster-rm
 cluster-rm: ## Remove a K3D Kubernetes cluster
-	$(info Removing Kubernetes cluster...)
-	k3d cluster delete nyu-devops
+	$(info Removing Kubernetes cluster $(CLUSTER)...)
+	k3d cluster delete $(CLUSTER)
 
 .PHONY: tekton
 tekton: ## Install Tekton
@@ -95,7 +93,7 @@ knative: ## Install Knative
 	kubectl apply -f https://github.com/knative/eventing/releases/download/knative-v1.8.5/eventing-core.yaml
 
 .PHONY: deploy
-depoy: ## Deploy the service on local Kubernetes
+deploy: ## Deploy the service on local Kubernetes
 	$(info Deploying service locally...)
 	kubectl apply -f k8s/
 
@@ -116,6 +114,11 @@ init:	## Creates the buildx instance
 build:	## Build all of the project Docker images
 	$(info Building $(IMAGE) for $(PLATFORM)...)
 	docker build --rm --pull --tag $(IMAGE) .
+
+.PHONY: push
+push:	## Push the image to the container registry
+	$(info Pushing $(IMAGE)...)
+	docker push $(IMAGE)
 
 .PHONY: buildx
 buildx:	## Build multi-platform image with buildx
