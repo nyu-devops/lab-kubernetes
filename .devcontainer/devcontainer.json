@@ -1,6 +1,6 @@
 // spell: disable
 {
-	"name": "Kubernetes",
+	"name": "Kubernetes Lab",
     "build": {
         "dockerfile": "Dockerfile",
         "context": ".."
@@ -18,6 +18,12 @@
 	"customizations": {
 		"vscode": {
 			"settings": {
+				"cSpell.words": [
+					"pytest",
+					"pipenv",
+					"creds",
+					"virtualenvs"
+				],
 				"[python]": {
 					"editor.defaultFormatter": "ms-python.black-formatter",
 					"editor.formatOnSave": true
@@ -25,6 +31,7 @@
 				"git.mergeEditor": true,
 				"markdown-preview-github-styles.colorTheme": "light",
 				"makefile.extensionOutputFolder": "/tmp",
+				"makefile.configureOnOpen": false,
 				"python.testing.unittestEnabled": false,
 				"python.testing.pytestEnabled": true,			
 				"python.testing.pytestArgs": [
@@ -44,6 +51,8 @@
 				"ms-python.pylint",
 				"ms-python.flake8",
 				"ms-python.black-formatter",
+				"njpwerner.autodocstring",
+				"wholroyd.jinja",
 				"ms-vscode.makefile-tools",
 				"yzhang.markdown-all-in-one",
 				"DavidAnson.vscode-markdownlint",
@@ -56,13 +65,11 @@
 				"github.vscode-github-actions",
 				"hbenl.vscode-test-explorer",
 				"LittleFoxTeam.vscode-python-test-adapter",
-				"njpwerner.autodocstring",
-				"wholroyd.jinja",
 				"redhat.vscode-yaml",
+				"unjinjang.rest-api-client",
 				"ms-azuretools.vscode-docker",
 				"ms-kubernetes-tools.vscode-kubernetes-tools",
 				"inercia.vscode-k3d",
-				"rangav.vscode-thunder-client",
 				"streetsidesoftware.code-spell-checker",
 				"bbenoist.vagrant"
 			]
