@@ -12,8 +12,12 @@ sudo bash -c "echo '127.0.0.1    cluster-registry' >> /etc/hosts"
 echo "Make git stop complaining about unsafe folders..."
 git config --global --add safe.directory /app
 
-# Configure insecure registry
+echo "Configuring insecure registry"
 sudo cp ./config/insecure-registry.json /etc/docker/daemon.json
+echo "Restarting Docker..."
+sudo pkill dockerd && sudo pkill containerd
+# ( dockerd > /tmp/dockerd.log 2>&1 ) &
+bash /usr/local/share/docker-init.sh
 
 echo "\n**********************************************************************"
 echo "Setup complete"
