@@ -15,6 +15,9 @@ EXPOSE $PORT
 # Enable color terminal for docker exec bash
 ENV TERM=xterm-256color
 
+# Configuring insecure Docker registry
+COPY config/insecure-registry.json /etc/docker/daemon.json 
+
 # Become a regular user for development
 USER $USERNAME
 
