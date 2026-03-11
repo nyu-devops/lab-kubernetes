@@ -1,6 +1,6 @@
-apiVersion: k3d.io/v1alpha3
+apiVersion: k3d.io/v1alpha5
 kind: Simple
-name: devops
+name: nyu-devops
 servers: 1
 agents: 1
 ports:

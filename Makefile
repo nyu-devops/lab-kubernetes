@@ -63,7 +63,9 @@ secret: ## Generate a secret hex key
 .PHONY: cluster
 cluster: ## Create a K3D Kubernetes cluster with load balancer and registry
 	$(info Creating Kubernetes cluster $(CLUSTER) with a registry and 1 worker node...)
-	k3d cluster create $(CLUSTER) --agents 1 --registry-create cluster-registry:0.0.0.0:5000 --port '8080:80@loadbalancer'
+# 	k3d cluster create $(CLUSTER) --agents 1 --registry-create cluster-registry:5000 --port '8080:80@loadbalancer'
+# 	k3d cluster create $(CLUSTER) --agents 1 --registry-create cluster-registry:0.0.0.0:5000 --port '8080:80@loadbalancer'
+	k3d cluster create $(CLUSTER) --agents 1 --registry-create cluster-registry:5000 --registry-config ./config/registries.yaml --port '8080:80@loadbalancer'
 
 .PHONY: cluster-rm
 cluster-rm: ## Remove a K3D Kubernetes cluster
@@ -78,12 +80,6 @@ tekton: ## Install Tekton
 	kubectl apply --filename https://storage.googleapis.com/tekton-releases/triggers/latest/interceptors.yaml
 	kubectl apply --filename https://storage.googleapis.com/tekton-releases/dashboard/latest/tekton-dashboard-release.yaml
 
-.PHONY: clustertasks
-clustertasks: ## Create Tekton Cluster Tasks
-	$(info Creating Tekton Cluster Tasks...)
-	wget -qO - https://raw.githubusercontent.com/tektoncd/catalog/main/task/openshift-client/0.2/openshift-client.yaml | sed 's/kind: Task/kind: ClusterTask/g' | kubectl create -f -
-	wget -qO - https://raw.githubusercontent.com/tektoncd/catalog/main/task/buildah/0.4/buildah.yaml | sed 's/kind: Task/kind: ClusterTask/g' | kubectl create -f -
-
 .PHONY: knative
 knative: ## Install Knative
 	$(info Installing Knative in the Cluster...)
@@ -96,6 +92,11 @@ knative: ## Install Knative
 deploy: ## Deploy the service on local Kubernetes
 	$(info Deploying service locally...)
 	kubectl apply -f k8s/
+
+.PHONY: undeploy
+undeploy: ## Delete the deployment of the service on local Kubernetes
+	$(info Deleting service locally...)
+	kubectl delete -f k8s/
 
 ############################################################
 # COMMANDS FOR BUILDING THE IMAGE
