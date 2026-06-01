@@ -78,6 +78,12 @@ cluster-rm: ## Remove a K3D Kubernetes cluster
 	$(info Removing Kubernetes cluster $(CLUSTER)...)
 	k3d cluster delete $(CLUSTER)
 
+.PHONY: headlamp
+headlamp: ## Install Headlamp Dashboard
+	$(info Installing Headlamp in the Cluster...)
+	helm repo add headlamp https://kubernetes-sigs.github.io/headlamp/
+	helm install headlamp-dashboard headlamp/headlamp --namespace kube-system
+
 .PHONY: tekton
 tekton: ## Install Tekton
 	$(info Installing Tekton in the Cluster...)
