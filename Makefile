@@ -61,11 +61,17 @@ secret: ## Generate a secret hex key
 ##@ Kubernetes
 
 .PHONY: cluster
-cluster: ## Create a K3D Kubernetes cluster with load balancer and registry
-	$(info Creating Kubernetes cluster $(CLUSTER) with a registry and 1 worker node...)
-# 	k3d cluster create $(CLUSTER) --agents 1 --registry-create cluster-registry:5000 --port '8080:80@loadbalancer'
-# 	k3d cluster create $(CLUSTER) --agents 1 --registry-create cluster-registry:0.0.0.0:5000 --port '8080:80@loadbalancer'
-	k3d cluster create $(CLUSTER) --agents 1 --registry-create cluster-registry:5000 --registry-config ./config/registries.yaml --port '8080:80@loadbalancer'
+cluster: ## Create or reuse a K3D Kubernetes cluster with 2 worker nodes
+	@if k3d cluster list | awk 'NR > 1 {print $$1}' | grep -Fxq '$(CLUSTER)'; then \
+		echo "Kubernetes cluster $(CLUSTER) already exists; reusing it..."; \
+		k3d cluster start $(CLUSTER); \
+	else \
+		echo "Creating Kubernetes cluster $(CLUSTER) with 2 worker nodes..."; \
+		k3d cluster create $(CLUSTER) --agents 2 --registry-create cluster-registry:5000 --registry-config ./config/registries.yaml --port '8080:80@loadbalancer'; \
+	fi
+	@mkdir -p $(HOME)/.kube
+	@k3d kubeconfig get $(CLUSTER) > $(HOME)/.kube/config
+	@echo "kubectl context configured for cluster $(CLUSTER)"
 
 .PHONY: cluster-rm
 cluster-rm: ## Remove a K3D Kubernetes cluster
