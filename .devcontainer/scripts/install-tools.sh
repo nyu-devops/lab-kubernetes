@@ -32,6 +32,13 @@ echo "Creating the cluster-registry entry in /etc/hosts..."
 sudo sh -c 'echo "127.0.0.1 cluster-registry" >> /etc/hosts'
 
 echo "**********************************************************************"
+echo "Installing Helm..."
+echo "**********************************************************************"
+curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4
+chmod 700 get_helm.sh
+./get_helm.sh
+
+echo "**********************************************************************"
 echo "Installing K9s..."
 echo "**********************************************************************"
 curl -L -o k9s.tar.gz "https://github.com/derailed/k9s/releases/download/v0.50.18/k9s_Linux_$ARCH.tar.gz"
