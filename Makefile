@@ -109,6 +109,8 @@ import: ## Import the image into the local K3D cluster
 deploy: ## Deploy the service on local Kubernetes
 	$(info Deploying service locally...)
 	kubectl apply -f k8s/
+	kubectl rollout restart deployment/hitcounter
+	kubectl rollout status deployment/hitcounter --timeout=180s
 
 .PHONY: undeploy
 undeploy: ## Delete the deployment of the service on local Kubernetes
