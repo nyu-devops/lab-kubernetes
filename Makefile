@@ -1,3 +1,4 @@
+# cspell:disable
 # These can be overidden with env vars.
 REGISTRY ?= cluster-registry:5000
 IMAGE_NAME ?= hitcounter
@@ -44,7 +45,7 @@ lint: ## Run the linter
 .PHONY: test
 test: ## Run the unit tests
 	$(info Running tests...)
-	export RETRY_COUNT=1; pytest --pspec --cov=service --cov-fail-under=95
+	export RETRY_COUNT=1; pytest --spec --cov=service --cov-fail-under=95
 
 ##@ Runtime
 
