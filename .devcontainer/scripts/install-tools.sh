@@ -41,7 +41,7 @@ chmod 700 get_helm.sh
 echo "**********************************************************************"
 echo "Installing K9s..."
 echo "**********************************************************************"
-curl -L -o k9s.tar.gz "https://github.com/derailed/k9s/releases/download/v0.50.18/k9s_Linux_$ARCH.tar.gz"
+curl -L -o k9s.tar.gz "https://github.com/derailed/k9s/releases/download/v0.51.0/k9s_Linux_$ARCH.tar.gz"
 tar xvzf k9s.tar.gz
 sudo install -c -m 0755 k9s /usr/local/bin
 rm k9s.tar.gz
